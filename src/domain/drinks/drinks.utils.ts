@@ -25,7 +25,9 @@ const MAX_SHARED_HOLDERS = 2
 
 const AXIS_STATS: Readonly<Record<AxisKey, AxisStats>> = Object.fromEntries(
   AXES.map(({ key }) => {
-    const values = DRINKS.map((drink) => drink.axes[key])
+    // Widened to number: the literal union is a guard on *authoring*, and summing it back into
+    // a mean immediately leaves the range anyway.
+    const values: number[] = DRINKS.map((drink) => drink.axes[key])
     const min = Math.min(...values)
     const max = Math.max(...values)
     return [

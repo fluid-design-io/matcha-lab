@@ -1,7 +1,277 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
+/*
+ * Matcha Lab — the token system.
+ *
+ * Encodes Part 1 of DESIGN-TASTE.md. If you are about to hard-code a colour, a font size, or an
+ * edge margin in a component, the value belongs here instead.
+ */
 @import 'tailwindcss';
-@plugin '@tailwindcss/typography';
 
-@import 'tw-animate-css';
+/* ---------------------------------------------------------------------------------- fonts */
 
-@custom-variant dark (&:is(.dark *));
+/*
+ * Self-hosted and subset — see scripts/build-fonts.sh. A home-screen app must launch from a cold
+ * cache with no network, so there is no Google Fonts round trip.
+ *
+ * font-display: block, not swap. These files are ~28 KB together and preloaded; swapping would
+ * flash the system CJK face at 450px, which is far worse than 40 ms of nothing on a surface
+ * already painting flat #7B8F63.
+ */
+@font-face {
+  font-family: 'Archivo Subset';
+  src: url('./assets/fonts/archivo-subset.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'Noto Sans JP Subset';
+  src: url('./assets/fonts/noto-sans-jp-subset.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+
+/* ------------------------------------------------------------------------ aspect breakpoints
+ *
+ * Layout adapts by aspect ratio, not width. Tailwind's --breakpoint-* namespace can only generate
+ * width queries, so the system is expressed as custom variants — the only v4 mechanism that can
+ * guard on min-width AND min-height at once.
+ *
+ * The width/height guards are the whole point: an 852x393 phone in landscape satisfies
+ * aspect-ratio >= 1 but fails height >= 620px, so it stays compact instead of getting the tall
+ * treatment. Base (unprefixed) styles ARE the compact treatment.
+ */
+@custom-variant land (@media (aspect-ratio >= 1) and (width >= 900px) and (height >= 620px));
+@custom-variant port (@media (aspect-ratio < 1) and (width >= 700px) and (height >= 900px));
+@custom-variant roomy (@media ((width >= 1280px) and (height >= 940px)) or ((width >= 960px) and (height >= 1280px)));
+
+@theme {
+  /* ----------------------------------------------------------------------------- typefaces */
+  --font-sans: 'Archivo Subset', ui-sans-serif, system-ui, sans-serif;
+  --font-jp: 'Noto Sans JP Subset', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+
+  /* --------------------------------------------------------------------------- ground truth */
+  --color-field: #7b8f63;
+  --color-field-deep: #6e8156;
+  --color-paper: #f1ecdf;
+  --color-paper-shade: #e8e3d8;
+  --color-ink: #1f271c;
+  --color-accent: #a8c4d6;
+
+  /* ------------------------------------------------------------------- roles on the field
+   * Paper at a fixed opacity ramp. Components use the role, never a raw alpha. */
+  --color-on-field: var(--color-paper);
+  --color-on-field-strong: color-mix(in oklab, var(--color-paper) 88%, transparent);
+  --color-on-field-muted: color-mix(in oklab, var(--color-paper) 62%, transparent);
+  --color-on-field-faint: color-mix(in oklab, var(--color-paper) 46%, transparent);
+  --color-on-field-ghost: color-mix(in oklab, var(--color-paper) 14%, transparent);
+  --color-hairline-field: color-mix(in oklab, var(--color-paper) 22%, transparent);
+
+  /* ------------------------------------------------------------------------ roles on paper */
+  --color-on-paper: var(--color-ink);
+  --color-on-paper-muted: color-mix(in oklab, var(--color-ink) 58%, transparent);
+  --color-on-paper-faint: color-mix(in oklab, var(--color-ink) 38%, transparent);
+  --color-hairline: color-mix(in oklab, var(--color-ink) 20%, transparent);
+
+  /* The field seen through the recipe overlay — a darkened field, never a black wash.
+   * Measured #4D5B3E off ref-3-recipe.png. A neutral black scrim kills the green, and the
+   * green is the whole world. */
+  --color-scrim: color-mix(in oklab, #414f34 88%, transparent);
+
+  /* ---------------------------------------------------------------------------- type scale
+   *
+   * Two density multipliers, set on :root below. Display type gives up ~16% at the smaller
+   * viewports; micro-labels give up almost nothing, because 9px letterspaced caps stop being
+   * legible before they stop fitting. --text-micro does not scale at all. */
+  --text-title: calc(2.25rem * var(--type-display));
+  --text-title--line-height: 1;
+  --text-title--font-weight: 300;
+  --text-title--letter-spacing: -0.01em;
+
+  --text-quantity: calc(1.875rem * var(--type-display));
+  --text-quantity--line-height: 1.1;
+  --text-quantity--font-weight: 300;
+  --text-quantity--letter-spacing: -0.01em;
+
+  --text-kanji-xl: calc(2.5rem * var(--type-display));
+  --text-kanji-xl--line-height: 1;
+  --text-kanji-xl--font-weight: 300;
+
+  --text-kanji-lg: calc(2rem * var(--type-display));
+  --text-kanji-lg--line-height: 1;
+  --text-kanji-lg--font-weight: 300;
+
+  --text-kanji-md: calc(1.5rem * var(--type-display));
+  --text-kanji-md--line-height: 1;
+  --text-kanji-md--font-weight: 250;
+
+  --text-body: calc(1.125rem * var(--type-display));
+  --text-body--line-height: 1.55;
+  --text-body--font-weight: 300;
+
+  --text-kanji-sm: calc(1rem * var(--type-micro));
+  --text-kanji-sm--line-height: 1;
+  --text-kanji-sm--font-weight: 300;
+  --text-kanji-sm--letter-spacing: 0.16em;
+
+  --text-kanji-xs: calc(0.875rem * var(--type-micro));
+  --text-kanji-xs--line-height: 1;
+  --text-kanji-xs--font-weight: 300;
+
+  --text-name: calc(0.875rem * var(--type-micro));
+  --text-name--line-height: 1.4;
+  --text-name--font-weight: 400;
+
+  --text-detail: calc(0.6875rem * var(--type-micro));
+  --text-detail--line-height: 1.5;
+  --text-detail--font-weight: 400;
+  --text-detail--letter-spacing: 0.06em;
+
+  --text-romaji: calc(0.6875rem * var(--type-micro));
+  --text-romaji--line-height: 1;
+  --text-romaji--font-weight: 500;
+  --text-romaji--letter-spacing: 0.26em;
+
+  --text-label: calc(0.625rem * var(--type-micro));
+  --text-label--line-height: 1;
+  --text-label--font-weight: 500;
+  --text-label--letter-spacing: 0.3em;
+
+  --text-numeral: calc(0.6875rem * var(--type-micro));
+  --text-numeral--line-height: 1;
+  --text-numeral--font-weight: 400;
+  --text-numeral--letter-spacing: 0.18em;
+
+  --text-micro: 0.5625rem;
+  --text-micro--line-height: 1;
+  --text-micro--font-weight: 500;
+  --text-micro--letter-spacing: 0.18em;
+
+  /* -------------------------------------------------------------------------------- motion
+   *
+   * CALIBRATION PENDING — ticket 09. The shape is settled; these numbers are candidate C and
+   * are not final until a human has picked. See DESIGN-TASTE.md § Motion. */
+  --motion-stagger: 40ms;
+  --motion-opacity-floor: 0;
+  --motion-drift: 0px;
+  --ease-field: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@layer base {
+  :root {
+    /* Density. Compact is the default; `roomy` restores full scale. */
+    --type-display: 0.84;
+    --type-micro: 0.92;
+
+    /* Layout, per DESIGN-TASTE / docs/design/layout-geometry.md */
+    --edge: 24px;
+    --rail-w: 100%;
+    --rail-item: 52px;
+    --watermark-size: 34svw;
+    --frame-size: min(76svw, 40svh);
+    --panel-pad: 28px;
+
+    color-scheme: light only;
+  }
+
+  @media (aspect-ratio >= 1) and (width >= 900px) and (height >= 620px) {
+    :root {
+      --edge: 44px;
+      --rail-w: 116px;
+      --rail-item: 60px;
+      --watermark-size: 44svh;
+      --frame-size: min(48svh, 38svw);
+    }
+  }
+
+  @media (aspect-ratio < 1) and (width >= 700px) and (height >= 900px) {
+    :root {
+      --edge: 44px;
+      --rail-w: 100%;
+      --rail-item: 88px;
+      --watermark-size: 28svw;
+      --frame-size: min(58svw, 44svh);
+    }
+  }
+
+  @media ((width >= 1280px) and (height >= 940px)) or ((width >= 960px) and (height >= 1280px)) {
+    :root {
+      --type-display: 1;
+      --type-micro: 1;
+      --edge: 56px;
+      --panel-pad: 56px;
+    }
+  }
+
+  /* Rail pitch is measured off each reference master separately — 73px vertical, 108px
+   * horizontal — so the two roomy cases cannot share one value. */
+  @media (width >= 1280px) and (height >= 940px) {
+    :root {
+      --rail-w: 138px;
+      --rail-item: 73px;
+    }
+  }
+
+  @media (width >= 960px) and (height >= 1280px) {
+    :root {
+      --rail-item: 108px;
+    }
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    /* Flat, so there is no white flash before the GPU device resolves. This is first paint,
+     * not a WebGPU fallback — there is no fallback path. */
+    background-color: var(--color-field);
+    color: var(--color-on-field);
+    font-family: var(--font-sans);
+    font-optical-sizing: none;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+
+    /* One viewport. No scroll on the main experience, and no rubber-band revealing anything
+     * behind it on iPadOS. */
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Japanese resolves first, Latin falls through — so a mixed run like `凪 — calm sea` sets
+   * each half in the face that owns it. */
+  :lang(ja),
+  .font-jp {
+    font-family: var(--font-jp), var(--font-sans);
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-accent);
+    outline-offset: 4px;
+  }
+
+  button {
+    cursor: pointer;
+  }
+}
+
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Letterspacing adds trailing space after the last glyph. Any letterspaced run that has to align
+ * to a right edge, or sit next to an icon, needs it taken back off.
+ */
+@utility untrack {
+  margin-right: -0.3em;
+}

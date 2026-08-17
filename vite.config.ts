@@ -1,24 +1,24 @@
-import typegpuPlugin from "unplugin-typegpu/vite";
 import { defineConfig } from 'vite'
-import { devtools } from '@tanstack/devtools-vite'
-
+import { nitro } from 'nitro/vite'
+import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
-
 import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
-import tailwindcss from '@tailwindcss/vite'
-import { nitro } from 'nitro/vite'
+import typegpuPlugin from 'unplugin-typegpu/vite'
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
   plugins: [
-    devtools(),
     nitro({ rollupConfig: { external: [/^@sentry\//] } }),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({
+      // A home-screen app should behave as a standalone shell rather than round-tripping a
+      // server on every launch. The shell prerenders once; everything after that is client-side.
+      spa: { enabled: true },
+    }),
     viteReact(),
     babel({ presets: [reactCompilerPreset()] }),
-    typegpuPlugin()
+    typegpuPlugin(),
   ],
 })
 

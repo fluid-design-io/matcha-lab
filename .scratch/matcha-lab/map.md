@@ -61,6 +61,11 @@ Reached when the core loop — *select drink → view drink → open recipe → 
   tiebreak on distance from the collection mean) writes the sentence. With the final nine that
   sentence belongs to TŌ, not NAGI as the mockup shows — the derivation catches it.
   — [The nine drinks as content](./issues/03-drink-content.md)
+- Shell is SPA mode + `src/screens/lab/lab.shell.tsx`: one grid, four slots, two arrangements.
+  Aspect variants are `land` / `port` / `roomy`, with base styles *being* the compact treatment;
+  a phone in landscape correctly stays compact because `land` also demands `height >= 620px`.
+  Fonts are subset to 28 KB total by enumerating the exact glyph set — taking whole unicode ranges
+  costs 6.8× on variable CJK. — [App shell and SPA foundation](./issues/02-app-shell.md)
 
 ## Not yet specified
 

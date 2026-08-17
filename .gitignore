@@ -14,3 +14,6 @@ todos.json
 
 # render pipeline scratch
 .render-work
+
+# font subsetting venv
+.fontenv

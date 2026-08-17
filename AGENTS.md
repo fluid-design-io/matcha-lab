@@ -8,3 +8,35 @@ Before editing files for a substantial task:
 - Monorepos: when working across packages, run the skill check from the workspace root and prefer the local skill for the package being changed.
 - Multiple matches: prefer the most specific local skill for the package or concern you are changing; load additional skills only when the task spans multiple packages or concerns.
 <!-- intent-skills:end -->
+
+## Where things go
+
+Per the `react-composition-structure` skill. Establish nothing new without a reason.
+
+```
+src/
+  assets/           fonts/ and renders/ — imported, so Vite fingerprints them
+  components/       shared, multi-part UI. Compound folders with one public namespace
+  domain/           content and state, no React components
+    drinks/         the nine records + derivations over the collection
+    favourites/     the one thing that persists
+  screens/          route-bound modules; `lab/` is the only route surface
+  routes/           thin TanStack Router wrappers — no orchestration
+  lib/              helpers with a proven second consumer
+  styles.css        the token system. Colours, type, spacing, motion
+```
+
+One stem per folder, one responsibility per suffix (`.screen.tsx`, `.data.ts`, `.types.ts`,
+`.context.tsx`, `.utils.ts`, `.content.ts`). `index.ts` is the only public boundary; leaves stay
+internal unless they are intentionally public.
+
+## Before touching UI
+
+Read `DESIGN-TASTE.md`. Every colour, type size, motion timing and layout number is a token
+there — if you are about to hard-code one, it already exists.
+
+- `docs/design/layout-geometry.md` — measurements, viewport by viewport
+- `docs/design/image-generation.md` — the contract the nine drink renders were made under
+
+Consult the `motion` skill before writing any animation (import from `motion/react`, never
+`framer-motion`), and the `typegpu` skill before touching the field shader.
