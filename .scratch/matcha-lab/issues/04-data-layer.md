@@ -1,8 +1,47 @@
 # Data layer on TanStack Store
 
 Type: task
-Status: open
+Status: resolved
 Blocked by: 03
+
+## Answer
+
+`src/domain/favourites/` — a deep module. Components get five hooks and never see the store, the
+storage key, or the serialisation format.
+
+```ts
+useFavouritesPersistence()   // once, at the root
+useIsFavourite(id)
+useFavouriteCount()
+useFavouritesHydrated()      // for fading the count in, not for branching on
+useToggleFavourite()
+```
+
+Nothing was installed and nothing was removed — `@tanstack/store` and `@tanstack/react-store` were
+already there, and `@tanstack/react-db` was never added.
+
+- **Drinks stay static.** Imported directly, never in a store.
+- **Key is `matcha-lab:favourites`**, holding a plain JSON array of ids you can read in devtools.
+- **Hydration happens in an effect**, so the prerendered shell never touches `localStorage`. The
+  store is created at module scope but does not read storage there.
+- **Read before subscribe**, so hydration cannot immediately write back what it just read. Proven
+  by a test that counts writes.
+- **`hydrated` is part of the state**, so ticket 12's counter can fade in as it settles rather
+  than popping from 0.
+- `useSelector`, not `useStore` — the latter is deprecated in `@tanstack/react-store` 0.11.
+
+Twelve tests in `__test__/favourites.store.test.ts`, because "a malformed localStorage entry must
+not white-screen the app" is the kind of requirement nobody verifies by hand:
+
+- the four ways a stored value goes bad — malformed JSON, an empty string, a JSON object, a JSON
+  scalar — each hydrating to empty rather than throwing;
+- **unknown ids dropped.** 柔 YAWA was a real drink during charting before it became 透 TŌ. An iPad
+  that stored it must not keep counting it, so ids are validated against the collection;
+- a storage that refuses to write, the way private browsing and a full quota do: the session stays
+  correct, it is simply not persisted, and the click handler does not throw;
+- teardown actually stopping the write-back.
+
+`bun test` and `bun run typecheck` are now scripts.
 
 ## Question
 

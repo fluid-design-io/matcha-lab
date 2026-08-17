@@ -61,6 +61,10 @@ Reached when the core loop — *select drink → view drink → open recipe → 
   tiebreak on distance from the collection mean) writes the sentence. With the final nine that
   sentence belongs to TŌ, not NAGI as the mockup shows — the derivation catches it.
   — [The nine drinks as content](./issues/03-drink-content.md)
+- Favourites are a TanStack Store persisted by hand to `matcha-lab:favourites`, hydrated in an effect
+  and read-before-subscribe so hydration cannot write back what it just read. Stored ids are
+  validated against the collection, so a stored `yawa` from before 柔 became 透 does not keep
+  counting. — [Data layer on TanStack Store](./issues/04-data-layer.md)
 - Shell is SPA mode + `src/screens/lab/lab.shell.tsx`: one grid, four slots, two arrangements.
   Aspect variants are `land` / `port` / `roomy`, with base styles *being* the compact treatment;
   a phone in landscape correctly stays compact because `land` also demands `height >= 620px`.
