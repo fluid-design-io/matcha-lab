@@ -245,12 +245,31 @@ seconds and pixels:
 | `stagger` | `0.04` | Seconds of delay added per layer, in the order above. |
 | `layer` | `visualDuration 0.38`, `bounce 0` | The spring every dissolving layer uses. |
 | `drift` | `4` | Pixels a layer travels. In from below, out upward. |
+| `carry` | `48` | Pixels the render travels instead, when a swipe drove the change. |
 | `blur` | `2` | Pixels of defocus at the far end of the dissolve. |
 | `watermark` | `visualDuration 1`, `bounce 0` | The watermark's own, slower spring. |
 | `watermarkDrift` | `9` | It travels further, because it is furthest away. |
 | `watermarkBlur` | `4` | And defocuses further, for the same reason. |
 
 A layer fades **fully** out — `opacity: 0`, no floor — because its replacement is already fading in.
+
+**The swipe runs along the rail's axis** — left and right in portrait, up and down in landscape,
+where the rail is a column and the whole layout reads top to bottom. Forward is left and up in
+either case. Nothing else about the gesture changes with orientation, and the arrow keys already
+accept both axes everywhere.
+
+**A swipe that changes the drink is not a swipe that snaps back.** While the finger is down the
+render leans a fifth of its travel; on release there are two outcomes and they must not look alike:
+
+- **Under the threshold**, or at either end of the collection, the lean springs back to centre.
+  That bounce is the answer — nothing changed.
+- **Over it**, the lean does not return on its own. The render carries on the way it was sent,
+  `carry` past where the finger left it, while its replacement arrives from the other side. The
+  frame's return is retimed to the render's own place in the stagger so the two move as one piece
+  rather than the drink sliding back out from under its own change.
+
+Threshold, in `lab.gestures.ts`: 64px of travel, with velocity worth `0.12` of a second of it, so a
+short fast flick and a long slow drag both commit and a long drag released dead does not.
 
 **`styles.css` deliberately carries no `--motion-*` custom properties.** It carried eight and
 nothing read them. Springs cannot be expressed in CSS, so every animation in this app is a Motion
@@ -374,6 +393,8 @@ direction and label placement change. Never two components swapped.
   arguing with the watermark.
 - Selection is marked by a short accent rule — to the left of the kanji in landscape, beneath the
   romaji in portrait — and it is **one shared layout element** that slides.
+- **The stage's swipe follows the rail's axis**, so the direction that moves the collection is the
+  direction the collection is laid out in. See Motion.
 - **The whole slot is the hit target, and in portrait the slot fills the ruled band** — no part of
   the ruled area is dead to a finger, even though the glyph and its label sit in a shorter box
   pinned to the band's bottom edge. That clears 44×44px at every tablet target: 116×60 or 138×73

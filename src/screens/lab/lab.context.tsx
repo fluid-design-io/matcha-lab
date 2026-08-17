@@ -10,6 +10,7 @@ import {
 import { MotionConfig } from 'motion/react'
 
 import { DRINKS, OPENING_DRINK_ID, getDrink, getDrinkIndex, type DrinkId } from '#/domain/drinks'
+import type { SwipeCarry } from '#/lib/motion'
 
 import type { LabContextValue, SelectionKeyEvent } from './lab.types'
 
@@ -26,18 +27,29 @@ const STEP_KEYS: Readonly<Record<string, number>> = {
   ArrowUp: -1,
 }
 
+/** The selection and the gesture that reached it, together, so the two can never disagree. */
+type Selection = {
+  readonly id: DrinkId
+  readonly swipe: SwipeCarry | null
+}
+
 export function LabProvider({ children }: { children: ReactNode }) {
-  const [selectedId, setSelectedId] = useState<DrinkId>(OPENING_DRINK_ID)
+  const [selection, setSelection] = useState<Selection>({ id: OPENING_DRINK_ID, swipe: null })
   const [recipeOpen, setRecipeOpen] = useState(false)
 
-  const step = useCallback((delta: number) => {
-    setSelectedId((current) => {
+  const step = useCallback((delta: number, swipe: SwipeCarry | null = null) => {
+    setSelection((current) => {
       // Clamped, not wrapped: a swipe that teleports from 深 back to 翠 loses the sense of a fixed
       // collection with two ends.
-      const next = Math.min(Math.max(getDrinkIndex(current) + delta, 0), DRINKS.length - 1)
-      return DRINKS[next]!.id
+      const index = Math.min(Math.max(getDrinkIndex(current.id) + delta, 0), DRINKS.length - 1)
+      const id = DRINKS[index]!.id
+      return id === current.id ? current : { id, swipe }
     })
   }, [])
+
+  // Every route to a drink that is not a swipe clears the carry, so the render is only thrown out
+  // when a finger threw it.
+  const select = useCallback((id: DrinkId) => setSelection({ id, swipe: null }), [])
 
   // A handler rather than only a listener: Base UI's dialog stops keydown propagating out of its
   // popup, so the recipe overlay binds this itself to keep the arrows working over its pager.
@@ -46,8 +58,8 @@ export function LabProvider({ children }: { children: ReactNode }) {
       if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
       if (isTextEntry(event.target)) return
 
-      if (event.key === 'Home') setSelectedId(DRINKS[0]!.id)
-      else if (event.key === 'End') setSelectedId(DRINKS[DRINKS.length - 1]!.id)
+      if (event.key === 'Home') select(DRINKS[0]!.id)
+      else if (event.key === 'End') select(DRINKS[DRINKS.length - 1]!.id)
       else {
         const delta = STEP_KEYS[event.key]
         if (delta === undefined) return
@@ -56,7 +68,7 @@ export function LabProvider({ children }: { children: ReactNode }) {
 
       event.preventDefault()
     },
-    [step],
+    [select, step],
   )
 
   // A window listener rather than a rail listener, so the arrows work wherever focus is, and it
@@ -68,14 +80,15 @@ export function LabProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<LabContextValue>(
     () => ({
-      drink: getDrink(selectedId),
-      select: setSelectedId,
+      drink: getDrink(selection.id),
+      swipe: selection.swipe,
+      select,
       step,
       onSelectionKeyDown,
       recipeOpen,
       setRecipeOpen,
     }),
-    [selectedId, recipeOpen, step, onSelectionKeyDown],
+    [selection, recipeOpen, select, step, onSelectionKeyDown],
   )
 
   return (

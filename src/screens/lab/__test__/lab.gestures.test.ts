@@ -4,8 +4,8 @@ import { swipeStep } from '../lab.gestures'
 
 /**
  * The swipe itself needs a real pointer and a real frameloop; what is testable is the decision it
- * makes on release. Sign convention: the finger moving left is a negative offset and moves forward
- * through the collection, the way a page turns.
+ * makes on release. One function serves both axes: a negative offset is the finger moving left in
+ * portrait or up in landscape, and either moves forward through the collection.
  */
 describe('swipeStep', () => {
   test('a settled drag under the threshold does nothing', () => {
@@ -33,9 +33,5 @@ describe('swipeStep', () => {
   test('a drag that reverses before release does not commit the way it started', () => {
     // Dragged 70px left, then flicked back right hard enough to cancel it.
     expect(swipeStep(-70, 300)).toBe(0)
-  })
-
-  test('vertical movement alone is not a swipe', () => {
-    expect(swipeStep(0, 0)).toBe(0)
   })
 })

@@ -1,7 +1,8 @@
-import { useCallback } from 'react'
-import { useMotionValue, type MotionValue, type PanInfo } from 'motion/react'
+import { useCallback, useSyncExternalStore } from 'react'
+import { animate, useMotionValue, type MotionValue, type PanInfo } from 'motion/react'
 
 import { DRINKS, getDrinkIndex } from '#/domain/drinks'
+import { carryTransition, useMotionTokens, type SwipeAxis, type SwipeCarry } from '#/lib/motion'
 
 import { useLab } from './lab.context'
 
@@ -27,43 +28,69 @@ const YIELD = 0.2
 const YIELD_AT_END = 0.05
 
 /**
+ * The shell's landscape arrangement, mirrored from the `land` variant in `styles.css`. The two must
+ * stay in step: the swipe follows the rail, and the rail is a column only here.
+ */
+const LANDSCAPE_QUERY = '(min-aspect-ratio: 1/1) and (min-width: 900px) and (min-height: 620px)'
+
+/**
  * What a released swipe means: `1` forward, `-1` back, `0` nothing. Distance and velocity are
  * summed rather than checked separately, so a long slow drag and a short fast flick both commit
  * while a long drag that stops dead does not.
  */
-export function swipeStep(offsetX: number, velocityX: number): -1 | 0 | 1 {
-  const travel = offsetX + velocityX * VELOCITY_WEIGHT
+export function swipeStep(offset: number, velocity: number): -1 | 0 | 1 {
+  const travel = offset + velocity * VELOCITY_WEIGHT
   if (travel <= -COMMIT_DISTANCE) return 1
   if (travel >= COMMIT_DISTANCE) return -1
   return 0
 }
 
+function subscribeLandscape(onChange: () => void): () => void {
+  if (typeof window === 'undefined') return () => {}
+  const query = window.matchMedia(LANDSCAPE_QUERY)
+  query.addEventListener('change', onChange)
+  return () => query.removeEventListener('change', onChange)
+}
+
+function isLandscape(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia(LANDSCAPE_QUERY).matches
+}
+
 export type DrinkSwipe = {
-  /** Bind this to anything that should slide with the gesture. The render frame does. */
-  readonly x: MotionValue<number>
+  /** The axis the gesture runs on, for whatever has to be bound to one. */
+  readonly axis: SwipeAxis
+  /** How far the render leans out of place, in px along `axis`, while the finger is down. */
+  readonly lean: MotionValue<number>
   /** Spread onto the `motion` element that receives the gesture. */
   readonly surface: {
-    readonly drag: 'x'
-    readonly dragConstraints: { left: 0; right: 0 }
-    readonly dragElastic: { left: number; right: number; top: 0; bottom: 0 }
+    readonly drag: SwipeAxis
+    readonly dragConstraints: { top: 0; right: 0; bottom: 0; left: 0 }
+    readonly dragElastic: { top: number; right: number; bottom: number; left: number }
     readonly dragMomentum: false
     readonly onDragEnd: (event: unknown, info: PanInfo) => void
     /**
-     * Motion writes the gesture straight to this value instead of transforming the element it is
+     * Motion writes the gesture straight to `lean` instead of transforming the element it is
      * spread onto, which must stay put — a surface that rode the elastic would sit over the rail
      * for the length of the snap-back and swallow taps on it.
      */
-    readonly _dragX: MotionValue<number>
+    readonly _dragX: MotionValue<number> | undefined
+    readonly _dragY: MotionValue<number> | undefined
   }
 }
 
 /**
- * Horizontal swipe to move between drinks, identical in both orientations because the swipe is
- * about the collection and not about the rail. Swiping left moves forward, the way a page turns.
+ * Swipe to move between drinks, along whichever axis the rail runs: left for the next drink in
+ * portrait, up for it in landscape, the way a page turns in the direction the collection is laid
+ * out. A committed swipe hands its lean to the dissolve rather than snapping back, so the render
+ * carries on out and its replacement arrives from the other side.
  */
 export function useDrinkSwipe(): DrinkSwipe {
   const { drink, step } = useLab()
-  const x = useMotionValue(0)
+  const tokens = useMotionTokens()
+  const landscape = useSyncExternalStore(subscribeLandscape, isLandscape, () => false)
+  const axis: SwipeAxis = landscape ? 'y' : 'x'
+  const lean = useMotionValue(0)
 
   const index = getDrinkIndex(drink.id)
   const atFirst = index <= 0
@@ -71,29 +98,41 @@ export function useDrinkSwipe(): DrinkSwipe {
 
   const onDragEnd = useCallback(
     (_event: unknown, info: PanInfo) => {
-      const delta = swipeStep(info.offset.x, info.velocity.x)
-      // `step` clamps, so at the ends this is deliberately a no-op — the elastic already said so.
-      if (delta !== 0) step(delta)
+      const direction = swipeStep(info.offset[axis], info.velocity[axis])
+      if (direction === 0) return
+      // At the ends `step` clamps to a no-op, so the lean stays on Motion's own snap-back and the
+      // elastic that already resisted the finger is the whole answer.
+      if (direction === 1 ? atLast : atFirst) return
+
+      const swipe: SwipeCarry = { axis, direction }
+      step(direction, swipe)
+      // Taking the return over from Motion is what stops the render bouncing back out from under
+      // the change: it holds where the finger left it until the render's turn in the dissolve.
+      animate(lean, 0, carryTransition(tokens))
     },
-    [step],
+    [atFirst, atLast, axis, lean, step, tokens],
   )
 
+  // Forward is left and up, which is the low end of either axis.
+  const forwardYield = atLast ? YIELD_AT_END : YIELD
+  const backYield = atFirst ? YIELD_AT_END : YIELD
+
   return {
-    x,
+    axis,
+    lean,
     surface: {
-      drag: 'x',
+      drag: axis,
       // A point, not a range: the render never leaves its position, it only leans.
-      dragConstraints: { left: 0, right: 0 },
-      dragElastic: {
-        left: atLast ? YIELD_AT_END : YIELD,
-        right: atFirst ? YIELD_AT_END : YIELD,
-        top: 0,
-        bottom: 0,
-      },
+      dragConstraints: { top: 0, right: 0, bottom: 0, left: 0 },
+      dragElastic:
+        axis === 'x'
+          ? { left: forwardYield, right: backYield, top: 0, bottom: 0 }
+          : { top: forwardYield, bottom: backYield, left: 0, right: 0 },
       // Momentum on a pinned element just overshoots and springs back twice.
       dragMomentum: false,
       onDragEnd,
-      _dragX: x,
+      _dragX: axis === 'x' ? lean : undefined,
+      _dragY: axis === 'y' ? lean : undefined,
     },
   }
 }

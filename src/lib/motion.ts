@@ -23,6 +23,8 @@ export type MotionTokens = {
   readonly drift: number
   /** The watermark travels further, because it is furthest away. */
   readonly watermarkDrift: number
+  /** How far a swipe carries the layer it moved, in px, along the axis the finger ran. */
+  readonly carry: number
   /** Blur radius, in px, at the far end of the dissolve. `0` means no defocus. */
   readonly blur: number
   /** The watermark defocuses further, for the same reason it travels further. */
@@ -44,6 +46,15 @@ const MOTION_LAYERS = [
 
 export type MotionLayer = (typeof MOTION_LAYERS)[number]
 
+/** Which way the finger moves to change drinks. It follows the rail, so a rail column swipes `y`. */
+export type SwipeAxis = 'x' | 'y'
+
+/** A committed swipe: the axis it ran along, and `1` forward through the collection or `-1` back. */
+export type SwipeCarry = {
+  readonly axis: SwipeAxis
+  readonly direction: -1 | 1
+}
+
 /**
  * Tokens are a required argument and both token objects are module-private, so every caller
  * reaches them through `useMotionTokens()` and its `prefers-reduced-motion` handling.
@@ -62,6 +73,7 @@ const MOTION: MotionTokens = {
   watermark: { visualDuration: 2, bounce: 0 },
   drift: 4,
   watermarkDrift: 8,
+  carry: 48,
   blur: 2,
   watermarkBlur: 12,
 }
@@ -77,6 +89,7 @@ const MOTION_REDUCED: MotionTokens = {
   watermark: { visualDuration: 0.12, bounce: 0 },
   drift: 0,
   watermarkDrift: 0,
+  carry: 0,
   blur: 0,
   watermarkBlur: 0,
 }
@@ -96,10 +109,12 @@ function layerDistance(
     : { drift: tokens.drift, blur: tokens.blur }
 }
 
+type DissolveState = { opacity: number; x: number; y: number; filter: string }
+
 export type DissolveVariants = {
-  initial: { opacity: number; y: number; filter: string }
-  animate: { opacity: number; y: number; filter: string }
-  exit: { opacity: number; y: number; filter: string }
+  initial: DissolveState
+  animate: DissolveState
+  exit: DissolveState
   transition: {
     type: 'spring'
     visualDuration: number
@@ -109,19 +124,38 @@ export type DissolveVariants = {
 }
 
 /**
+ * Where the arriving copy of a layer starts and where the leaving one ends. A swipe replaces the
+ * rise with `carry` along the axis the finger ran.
+ */
+function travel(drift: number, tokens: MotionTokens, swipe: SwipeCarry | null) {
+  if (!swipe) return { from: { x: 0, y: drift }, to: { x: 0, y: -drift } }
+
+  const carry = tokens.carry * swipe.direction
+  return swipe.axis === 'x'
+    ? { from: { x: carry, y: 0 }, to: { x: -carry, y: 0 } }
+    : { from: { x: 0, y: carry }, to: { x: 0, y: -carry } }
+}
+
+/**
  * The whole transition for one layer, as props for a `motion` element inside `AnimatePresence`.
  * The incoming layer rises from below and the outgoing one leaves upward, which is what makes 4px
- * legible as a direction at all.
+ * legible as a direction at all; pass `swipe` and the layer travels the way the finger sent it
+ * instead, its replacement arriving from the other side.
  */
-export function dissolve(layer: MotionLayer, tokens: MotionTokens): DissolveVariants {
+export function dissolve(
+  layer: MotionLayer,
+  tokens: MotionTokens,
+  swipe: SwipeCarry | null = null,
+): DissolveVariants {
   const spring = layerSpring(layer, tokens)
   const { drift, blur } = layerDistance(layer, tokens)
   const away = blur > 0 ? `blur(${blur}px)` : 'blur(0px)'
+  const { from, to } = travel(drift, tokens, swipe)
 
   return {
-    initial: { opacity: 0, y: drift, filter: away },
-    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
-    exit: { opacity: 0, y: -drift, filter: away },
+    initial: { opacity: 0, x: from.x, y: from.y, filter: away },
+    animate: { opacity: 1, x: 0, y: 0, filter: 'blur(0px)' },
+    exit: { opacity: 0, x: to.x, y: to.y, filter: away },
     transition: {
       type: 'spring',
       visualDuration: spring.visualDuration,
@@ -140,6 +174,19 @@ export function panelTransition(tokens: MotionTokens) {
     type: 'spring' as const,
     visualDuration: tokens.layer.visualDuration,
     bounce: tokens.layer.bounce,
+  }
+}
+
+/**
+ * The spring the render frame's lean returns on after a committed swipe, replacing Motion's own
+ * snap-back so the frame and the two dissolving copies inside it move as one.
+ */
+export function carryTransition(tokens: MotionTokens) {
+  return {
+    type: 'spring' as const,
+    visualDuration: tokens.layer.visualDuration,
+    bounce: tokens.layer.bounce,
+    delay: layerDelay('render', tokens),
   }
 }
 

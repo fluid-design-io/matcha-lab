@@ -1,12 +1,7 @@
 import type { ReactNode } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, usePresenceData } from 'motion/react'
 
-import {
-  dissolve,
-  useMotionTokens,
-  type DissolveVariants,
-  type MotionLayer,
-} from '#/lib/motion'
+import { dissolve, useMotionTokens, type MotionLayer, type SwipeCarry } from '#/lib/motion'
 import { cn } from '#/lib/utils'
 
 import { useLab } from './lab.context'
@@ -20,10 +15,10 @@ type LabLayerProps = {
    */
   layerKey?: string
   /**
-   * What the layer dissolves on. Defaults to `dissolve(layer)`; the title passes `rollDissolve`,
-   * because its letters do the leaving and arriving and a fade over the top of them only hides it.
+   * The swipe that caused the change, if one did. Only the render passes it — it is the layer the
+   * finger moved, and the rest keep their rise.
    */
-  variants?: DissolveVariants
+  swipe?: SwipeCarry | null
   /** Positioning and sizing for the layer as a whole. The copies inside inherit it. */
   className?: string
   children: ReactNode
@@ -35,31 +30,38 @@ type LabLayerProps = {
  * come from `useMotionTokens()`, which covers everything a spring can be shrunk to — a Motion
  * `layout` animation is out of its reach and `LabProvider`'s `MotionConfig` handles that instead.
  */
-export function LabLayer({
-  layer,
-  layerKey,
-  variants: variantsOverride,
-  className,
-  children,
-}: LabLayerProps) {
+export function LabLayer({ layer, layerKey, swipe = null, className, children }: LabLayerProps) {
   const { drink } = useLab()
-  const tokens = useMotionTokens()
-  const variants = variantsOverride ?? dissolve(layer, tokens)
 
   return (
     <div className={cn('grid', className)}>
-      <AnimatePresence initial={false}>
-        <motion.div
-          key={layerKey ?? drink.id}
-          className="relative col-start-1 row-start-1"
-          initial={variants.initial}
-          animate={variants.animate}
-          exit={variants.exit}
-          transition={variants.transition}
-        >
+      <AnimatePresence initial={false} custom={swipe}>
+        <LabLayerCopy key={layerKey ?? drink.id} layer={layer}>
           {children}
-        </motion.div>
+        </LabLayerCopy>
       </AnimatePresence>
     </div>
+  )
+}
+
+/**
+ * One side of the dissolve. It takes the swipe from `AnimatePresence` rather than from a prop,
+ * because the copy that is leaving has already been removed and has no props left to update.
+ */
+function LabLayerCopy({ layer, children }: { layer: MotionLayer; children: ReactNode }) {
+  const tokens = useMotionTokens()
+  const swipe = usePresenceData() as SwipeCarry | null | undefined
+  const variants = dissolve(layer, tokens, swipe)
+
+  return (
+    <motion.div
+      className="relative col-start-1 row-start-1"
+      initial={variants.initial}
+      animate={variants.animate}
+      exit={variants.exit}
+      transition={variants.transition}
+    >
+      {children}
+    </motion.div>
   )
 }

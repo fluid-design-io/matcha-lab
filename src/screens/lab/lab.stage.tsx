@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { motion, type MotionValue } from 'motion/react'
 
 import { neighbourRenders } from '#/domain/drinks'
+import type { SwipeAxis } from '#/lib/motion'
 
 import { useLab } from './lab.context'
 import { useDrinkSwipe } from './lab.gestures'
@@ -15,17 +16,17 @@ import { cn } from '#/lib/utils'
  * neither can push the footer down.
  */
 export function LabStage() {
-  const { x, surface } = useDrinkSwipe()
+  const { axis, lean, surface } = useDrinkSwipe()
 
   return (
     <>
       <LabWatermark />
-      <LabRenderFrame x={x} />
+      <LabRenderFrame axis={axis} lean={lean} />
 
       {/* The whole stage receives the gesture rather than the render alone: in landscape the render
           sits at 76% of the stage and a thumb at the left bezel would find nothing there. The
-          surface itself never moves — `_dragX` sends the offset to the render instead — so it
-          cannot drift over the rail column and eat a tap during the snap-back. */}
+          surface itself never moves — the drag writes to `lean`, which the render frame carries —
+          so it cannot drift over the rail column and eat a tap during the snap-back. */}
       <motion.div aria-hidden className="absolute inset-0" {...surface} />
     </>
   )
@@ -58,8 +59,8 @@ function LabWatermark() {
  * cropped. Two transforms stack and do not fight: Tailwind's centring uses the `translate`
  * property, Motion's swipe offset uses `transform`, and the browser applies `translate` first.
  */
-function LabRenderFrame({ x }: { x: MotionValue<number> }) {
-  const { drink } = useLab()
+function LabRenderFrame({ axis, lean }: { axis: SwipeAxis; lean: MotionValue<number> }) {
+  const { drink, swipe } = useLab()
 
   // Warm the two renders a single gesture can reach, so the incoming layer of the dissolve has a
   // decoded image in it rather than cross-fading from blank.
@@ -72,10 +73,11 @@ function LabRenderFrame({ x }: { x: MotionValue<number> }) {
 
   return (
     <motion.div
-      style={{ x }}
+      // The lean rides whichever axis the swipe runs on; the other one is never written to.
+      style={{ x: axis === 'x' ? lean : 0, y: axis === 'y' ? lean : 0 }}
       className="absolute top-3/5 land:top-1/2 left-1/2 size-(--frame-size) -translate-x-1/2 -translate-y-1/2 land:left-[76%] land:mt-6"
     >
-      <LabLayer layer="render" className="size-full">
+      <LabLayer layer="render" swipe={swipe} className="size-full">
         <LabRender drink={drink} tone="field" />
       </LabLayer>
     </motion.div>
