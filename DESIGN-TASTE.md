@@ -235,7 +235,13 @@ without 3D. Layer order, front to back:
 at the instrument — the prototype is still at `/prototypes/motion`. The pick is candidate B,
 *a whisper of travel*, plus a slight defocus.** Four pixels of rise is enough to feel a direction
 and not enough to see one; two pixels of blur at the far end reads as the layer settling into
-focus rather than as an effect.
+focus rather than as an effect. Those two numbers are B verbatim and have not moved since.
+
+**The watermark alone was retuned after the calibration**, in the same pass that reworked the field
+and the rail: slower and much softer, `visualDuration 1 → 2` and `watermarkBlur 4 → 12`, against a
+pixel less travel. The layers still resolve at B's pace — what changed is how far behind them the
+atmosphere is allowed to lag. The candidate set carries the retuned values so the instrument keeps
+measuring what ships.
 
 Every number lives in the `MOTION` object in `src/lib/motion.ts`, in the units Motion takes —
 seconds and pixels:
@@ -247,9 +253,9 @@ seconds and pixels:
 | `drift` | `4` | Pixels a layer travels. In from below, out upward. |
 | `carry` | `48` | Pixels the render travels instead, when a swipe drove the change. |
 | `blur` | `2` | Pixels of defocus at the far end of the dissolve. |
-| `watermark` | `visualDuration 1`, `bounce 0` | The watermark's own, slower spring. |
-| `watermarkDrift` | `9` | It travels further, because it is furthest away. |
-| `watermarkBlur` | `4` | And defocuses further, for the same reason. |
+| `watermark` | `visualDuration 2`, `bounce 0` | The watermark's own, slower spring. |
+| `watermarkDrift` | `8` | It travels further, because it is furthest away. |
+| `watermarkBlur` | `12` | And defocuses further, for the same reason. |
 
 A layer fades **fully** out — `opacity: 0`, no floor — because its replacement is already fading in.
 
@@ -290,7 +296,7 @@ Settled with the numbers:
   makes 01 → 09 feel like a heavier interaction than 01 → 02, and the collection is nine peers,
   not a timeline. One response to one change.
 - **The watermark's slower spring is doing real work** and stays. It is the only thing that says
-  the composition has depth, and at `blur(4px)` over one second it is the last thing to settle.
+  the composition has depth, and at `blur(12px)` over two seconds it is the last thing to settle.
 
 Fixed regardless of calibration:
 

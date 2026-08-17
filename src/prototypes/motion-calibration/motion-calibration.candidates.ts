@@ -18,8 +18,16 @@ export type Candidate = {
  * and a set of three that are all quiet just moves the question.
  *
  * **B was picked**, with a slight defocus added on top of it by the same call. The blur was asked
- * for after the four were judged; every candidate carries a proportionate value now so the
- * instrument still measures what shipped rather than a version of it that no longer exists.
+ * for after the four were judged, and B's watermark was retuned slower and softer after that; every
+ * candidate carries the shipped proportions now so the instrument still measures what shipped
+ * rather than a version of it that no longer exists. B and `MOTION` are the same numbers — if one
+ * moves, move the other, and the table in `DESIGN-TASTE.md` with it.
+ *
+ * That retune left B slower and blurrier than C, which inverted the one thing the set is for, so
+ * **C and D's watermark spring and blur were rescaled above the new B** to put the ladder back in
+ * order. Their travel was already clear of it and did not move. The multipliers are tighter than
+ * the ones they replace: 12px is a much higher floor than 4px was, and holding the old ratios would
+ * have taken D past 50px, which stops bracketing the range and just washes the glyph out.
  *
  * `carry` is `0` in all four: it only applies to a change a finger drove, and the instrument
  * triggers the transition from a button.
@@ -48,12 +56,12 @@ export const CANDIDATES: readonly Candidate[] = [
     tokens: {
       stagger: 0.04,
       layer: { visualDuration: 0.38, bounce: 0 },
-      watermark: { visualDuration: 1, bounce: 0 },
+      watermark: { visualDuration: 2, bounce: 0 },
       drift: 4,
-      watermarkDrift: 9,
+      watermarkDrift: 8,
       carry: 0,
       blur: 2,
-      watermarkBlur: 4,
+      watermarkBlur: 12,
     },
   },
   {
@@ -63,12 +71,12 @@ export const CANDIDATES: readonly Candidate[] = [
     tokens: {
       stagger: 0.055,
       layer: { visualDuration: 0.44, bounce: 0 },
-      watermark: { visualDuration: 1.2, bounce: 0.05 },
+      watermark: { visualDuration: 2.4, bounce: 0.05 },
       drift: 9,
       watermarkDrift: 20,
       carry: 0,
       blur: 4,
-      watermarkBlur: 9,
+      watermarkBlur: 16,
     },
   },
   {
@@ -78,12 +86,12 @@ export const CANDIDATES: readonly Candidate[] = [
     tokens: {
       stagger: 0.085,
       layer: { visualDuration: 0.58, bounce: 0.16 },
-      watermark: { visualDuration: 1.7, bounce: 0.2 },
+      watermark: { visualDuration: 3.2, bounce: 0.2 },
       drift: 20,
       watermarkDrift: 42,
       carry: 0,
       blur: 9,
-      watermarkBlur: 18,
+      watermarkBlur: 26,
     },
   },
 ]
