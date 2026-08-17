@@ -36,6 +36,17 @@
 @custom-variant port (@media (aspect-ratio < 1) and (width >= 700px) and (height >= 900px));
 @custom-variant roomy (@media ((width >= 1280px) and (height >= 940px)) or ((width >= 960px) and (height >= 1280px)));
 
+/* --------------------------------------------------------------- recipe panel arrangements
+ *
+ * The recipe popup is the app's one size container, named `recipe`. Four arrangements on two
+ * questions about the panel's own box: the long axis says which way the groups run, the 600px
+ * short-axis line says whether all four fit. Tall-and-roomy is the unprefixed base.
+ */
+@custom-variant recipe-tight (@container recipe ((width < 600px) or (height < 600px)));
+@custom-variant recipe-wide-roomy (@container recipe ((aspect-ratio >= 1) and (height >= 600px)));
+@custom-variant recipe-wide-tight (@container recipe ((aspect-ratio >= 1) and (height < 600px)));
+@custom-variant recipe-tall-tight (@container recipe ((aspect-ratio < 1) and (width < 600px)));
+
 @theme {
   /* ----------------------------------------------------------------------------- typefaces */
   --font-sans: 'Archivo Subset', ui-sans-serif, system-ui, sans-serif;
@@ -170,7 +181,6 @@
 
     --watermark-size: 34svw;
     --frame-size: min(76svw, 40svh);
-    --panel-pad: 28px;
 
     color-scheme: light only;
   }
@@ -212,7 +222,6 @@
       --type-display: 1;
       --type-micro: 1;
       --edge: 56px;
-      --panel-pad: 56px;
     }
   }
 

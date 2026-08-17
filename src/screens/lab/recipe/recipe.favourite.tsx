@@ -7,12 +7,9 @@ import { useIsFavourite, useToggleFavourite } from '#/domain/favourites'
 import { panelTransition, useMotionTokens } from '#/lib/motion'
 
 /**
- * `♥ SAVED` — the most tactile moment in the app, and the only thing allowed to be louder than the
- * ambient motion: three 12px hearts stacked in one box, the accent outline arriving a beat before
- * the fill, plus one scale overshoot.
- *
- * The stack exists so nothing has to animate `color` — every value here is `opacity` or
- * `transform`.
+ * `♥ SAVED` — three 12px hearts stacked in one box, the accent outline arriving a beat before the
+ * fill, plus one scale overshoot. The stack is what keeps `color` out of the animation: every value
+ * here is `opacity` or `transform`.
  */
 export function RecipeFavourite({ drink }: { drink: Drink }) {
   const saved = useIsFavourite(drink.id)
@@ -29,9 +26,9 @@ export function RecipeFavourite({ drink }: { drink: Drink }) {
       onClick={() => toggle(drink.id)}
       aria-pressed={saved}
       aria-label={`${drink.name} — ${saved ? 'saved to favourites' : 'save to favourites'}`}
-      // Block padding grows the target around the 12px glyph and the matching negative margin
-      // takes it back off the layout, so the footer row still measures only the glyph.
-      className="-my-4 flex shrink-0 items-center gap-2.5 py-4"
+      // The target is --tap tall around a `size-3` glyph, and the matching negative margin takes
+      // that growth back off, so the footer row still measures only the glyph.
+      className="my-[calc((0.75rem_-_var(--tap))/2)] flex h-(--tap) shrink-0 items-center gap-2.5"
     >
       {/* `initial={false}` on all three: opening the panel on an already-saved drink must show a
           filled heart, not perform one. Nothing in this app animates on mount. */}

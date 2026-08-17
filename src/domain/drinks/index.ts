@@ -7,13 +7,7 @@
  */
 export { AXES, DRINKS, MATCHA_BASE, OPENING_DRINK_ID, SERVE_LABEL } from './drinks.content'
 export { getDrinkRender, neighbourRenders } from './drinks.renders'
-export {
-  collectionExtremes,
-  getAxis,
-  getDrink,
-  getDrinkIndex,
-  leadsCollection,
-} from './drinks.utils'
+export { collectionExtremes, getDrink, getDrinkIndex, leadsCollection } from './drinks.utils'
 export type {
   Axis,
   AxisKey,

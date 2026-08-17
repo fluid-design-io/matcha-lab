@@ -91,10 +91,10 @@ grid-template-rows:    auto 1fr auto auto; /* masthead / stage / footer / rail *
 
 Same children, same order in the DOM. Only `grid-template-*` and the rail's flow direction change.
 
-`roomy` is not one block in `styles.css` — the density block (type scale, `--edge`, `--panel-pad`)
-covers both orientations, and then two shape-specific blocks carry the rail numbers, because the
-rail pitch was measured off each master separately and the two cannot share a value. The table
-follows that structure.
+`roomy` is not one block in `styles.css` — the density block (type scale and `--edge`) covers both
+orientations, and then two shape-specific blocks carry the rail numbers, because the rail pitch was
+measured off each master separately and the two cannot share a value. The table follows that
+structure.
 
 | Token | compact | `land` | `port` | roomy `land` | roomy `port` |
 | --- | --- | --- | --- | --- | --- |
@@ -240,20 +240,41 @@ Measured at 1366×1024. Two nested insets, and the hairline is **outside** the p
 | --- | --- | --- |
 | Hairline frame | 56px all sides (`x 56→1310`, `y 56→968`) | `var(--edge)` — the frame sits exactly on the main view's content margin |
 | Paper panel | 70px all sides (`x 70→1296`, `y 70→954`) | `calc(var(--edge) + 14px)` |
-| Panel padding | 56px | `--panel-pad` |
+| Panel padding | 56px | `--recipe-pad` — see below |
+
+Both insets are `land`/`port` only. Compact has room for neither, so there the frame is hidden and
+the panel fills the viewport inside the safe area.
 
 Because the frame is on the scrim, it takes a **field-side** ink role, not `--color-hairline`.
 Sampled at `x=56, y=512` in `ref-3-recipe.png` it reads `(185,186,169)`, which against the
 adjacent scrim `(72,85,58)` is paper at ~67%; the nearest shipped role is `--color-on-field-muted`
-at 62%. An
-ink-based hairline there would be invisible. The frame is a child of the panel rather than of the
-backdrop, so the two arrive as one object.
+at 62%. An ink-based hairline there would be invisible. The frame is a child of the panel rather
+than of the backdrop, so the two arrive as one object.
 
 Panel content box at 1366×1024: `1114 × 772`, from `x 126` to `x 1240`.
 
-The panel is the one component that gets **container queries** (`container-type: inline-size`).
-Its children respond to `cqw`/`cqh`, never to the viewport — it renders at 1226px wide in
-landscape and 884px wide in portrait, and the viewport cannot tell it which it is.
+The panel is the one component that gets **container queries**, and the type is
+`container-type: size` — never `inline-size`. `recipe.overlay.tsx` declares it as
+`containerType: 'size'` with `containerName: 'recipe'`, in `style` rather than a utility class so
+it cannot be overridden.
+
+**`inline-size` would break the panel silently, not visibly.** It resolves no block axis, so every
+`cqh` and `cqmin` clamp on the panel — `--recipe-pad`, `--recipe-lead`, `--recipe-band`,
+`--recipe-step`, `--recipe-row`, and the `--recipe-render` square — would collapse to its lower
+bound, and the arrangement queries that test the panel's `height` and `aspect-ratio` would never
+match, so a landscape panel would render the tall arrangement at minimum rhythm.
+
+Its children respond to `cqw`/`cqh`/`cqmin`, never to the viewport — the panel is 1226×884 in
+landscape and 884×1226 in portrait, and the viewport cannot tell it which it is.
+
+**Panel padding is one of those children, and it tracks the panel's *short* axis.** `--recipe-pad`
+is declared on the panel in `recipe.panel.tsx` as `clamp(16px, calc(11.2cqmin - 43px), 56px)`, and
+pinned to a flat `16px` once the short axis is under 600px. `cqmin`, not `cqw`: the padding is
+spent on both axes, so the axis with less to give is the one allowed to set it — a wide, short
+panel must not spend its height on margin. The expression is a straight line through the two
+measured panels: 56px at the masters' 884px short axis, 30px at the tightest tablet's 652px. It is
+deliberately **not** a `:root` density token beside `--edge`, because a viewport-level token cannot
+see the panel's own box, which is the only thing this measurement depends on.
 
 ### Landscape arrangement
 
@@ -307,34 +328,36 @@ layout or the content — never `overflow: auto`.
 
 ## Fonts
 
-Both faces are self-hosted from `public/fonts/` and **subset**, because a home-screen app must
-launch from a cold cache with no network. Full Noto Sans JP is ~5 MB; this app uses about 30
-distinct Japanese glyphs.
+Both faces are self-hosted from `src/assets/fonts/` and **subset**, because a home-screen app must
+launch from a cold cache with no network. `src/`, not `public/`: they are imported, so Vite
+fingerprints them and they cache immutably, and `__root.tsx` preloads the two hashed URLs. Full
+Noto Sans JP is 9.6 MB; the two subsets together are 28 KB.
 
-Sources are `devDependencies` — they are build inputs, not runtime deps. The generated `.woff2`
-files are committed.
+`scripts/build-fonts.sh` — `bun run fonts` — generates them, and the `.woff2` files are committed.
+It fetches the variable sources straight from `google/fonts`; the `@fontsource-variable/*`
+devDependencies pin the same versions but ship pre-split into unicode-range chunks, which is the
+opposite of what subsetting needs. It also needs `fonttools` and `brotli`, which are deliberately
+not project deps — the script's header has the venv command.
 
-```bash
-# regenerate: scripts/build-fonts.sh
+Both subsets are **enumerated glyph by glyph, not by unicode range**:
+
+- **Archivo** — ASCII, plus exactly the non-ASCII the app sets: `Ōō` for TŌ, `é` for purée, the en
+  and em dashes, the middle dot, the degree sign, and `→`, because `RECIPE →` sets the arrow as
+  type rather than as an icon. Width is instanced to 100 and the axis dropped; axes kept: `wght`.
+- **Noto Sans JP** — the glyphs below and nothing else. Kana are **not** included wholesale:
+  variable CJK carries heavy per-glyph `gvar` data, so adding all hiragana and katakana takes the
+  file from 14 KB to 96 KB for glyphs no string sets. Axes kept: `wght`. The `vert`/`vrt2` layout
+  features are kept, because the landscape rail sets romaji and kanji in `writing-mode: vertical-rl`.
+
+The Japanese set:
+
+```
+抹茶翠凪雲影泡温透苺深椰乳力涼濃味材料手順作方り度湯基本・ー
 ```
 
-The subset ranges:
-
-- **Archivo** (`@fontsource-variable/archivo`) — Latin basic + Latin-1 supplement + the arrow `→`,
-  em dash, middle dot, and degree sign. Axes kept: `wght`.
-- **Noto Sans JP** (`@fontsource-variable/noto-sans-jp`) — all hiragana, all katakana, the kanji
-  the app actually sets, plus `、。・「」〜°`. Kana are included wholesale rather than glyph-by-glyph
-  so future copy does not need a font rebuild. Axes kept: `wght`.
-
-Kanji currently set by the app:
-
-```
-抹茶翠凪雲影泡温透苺深椰乳力涼濃味材料手順作方基本度湯
-```
-
-If you add a kanji to any string in `src/`, re-run the script and commit the new `.woff2`. A
-missing glyph falls back to the system CJK face and is immediately, obviously wrong — different
-skeleton, different weight, different width.
+If you add **any** Japanese glyph to a string in `src/` — kana included — re-run the script and
+commit the new `.woff2`. A missing glyph falls back to the system CJK face and is immediately,
+obviously wrong: different skeleton, different weight, different width.
 
 `font-display: swap` is deliberately **not** used. These files are small and preloaded; a swap
 would flash the system CJK face at 450px, which is far worse than 40ms of nothing on a surface

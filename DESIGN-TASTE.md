@@ -50,7 +50,7 @@ never reach for a hue name in a component.
 | `--color-field` | `#7B8F63` | The matcha field. The single unifying world. `body` paints this flat so there is no white flash before the GPU device resolves. |
 | `--color-field-deep` | `#6E8156` | The field's shaded end. Used **only** by the shader and the overlay scrim — never as a surface fill. |
 | `--color-paper` | `#F1ECDF` | Rice paper. The recipe panel, and the ink colour for everything drawn *on* the field. |
-| `--color-paper-shade` | `#E8E3D8` | Recessed paper. The render well inside the recipe panel. |
+| `--color-paper-shade` | `#E8E3D8` | Recessed paper. The recipe panel's render well **while it is empty** — the render itself is opaque and covers it, so nothing else ever sees this. |
 | `--color-ink` | `#1F271C` | Green-black. Type on paper. Never on the field. |
 | `--color-accent` | `#A8C4D6` | The pale blue. Rail underline, axis markers, step numbers, the saved heart, the masthead tick. |
 
@@ -122,11 +122,12 @@ Two families, and they do not overlap in job.
 | Family | Role | Why |
 | --- | --- | --- |
 | **Noto Sans JP** (variable, wght) | Every Japanese glyph — kanji, kana. The watermark, the rail, the section heads, the axis glyphs. | It is the only face here that has to render 凪 at 450px and 12px in the same frame and stay on skeleton. |
-| **Archivo** (variable, wght + wdth) | Every Latin glyph — romaji, English, numerals, units. | A grotesque in the American-gothic line. Its moderate x-height sits correctly against kanji (Inter's tall x-height fights them), its caps stay crisp at 9px with 0.3em tracking, and it has real tabular figures for the quantity column. |
+| **Archivo** (variable, wght) | Every Latin glyph — romaji, English, numerals, units. | A grotesque in the American-gothic line. Its moderate x-height sits correctly against kanji (Inter's tall x-height fights them), its caps stay crisp at 9px with 0.3em tracking, and it has real tabular figures for the quantity column. |
 
-Both are **self-hosted and subset** into `public/fonts/`. No Google Fonts round trip — this is a
-home-screen app and must launch from a cold cache without a network. See
-[App shell](./docs/design/layout-geometry.md#fonts) for the subsetting command.
+Both are **self-hosted and subset** into `src/assets/fonts/`, imported so Vite fingerprints them.
+No Google Fonts round trip — this is a home-screen app and must launch from a cold cache without a
+network. The subsets are enumerated glyph by glyph, so **adding any Japanese glyph to a string
+needs a font rebuild**; see [Fonts](./docs/design/layout-geometry.md#fonts).
 
 Japanese never sets in Archivo and Latin never sets in Noto Sans JP. A mixed run
 (`凪 — calm sea, still water`) uses `font-family: var(--font-jp), var(--font-sans)` so the kanji
@@ -259,8 +260,12 @@ spring driven from the object above, and a parallel set of CSS numbers is a seco
 consumer — it can only drift. If a Tailwind `transition-*` ever genuinely has to keep pace with one
 of these springs, add the token to `@theme` at that point, next to the code that reads it.
 
-**Read tokens through `useMotionTokens()`** — never import `MOTION` directly into a component, or
-that component will ignore `prefers-reduced-motion`.
+**Read tokens through `useMotionTokens()`.** `MOTION` and `MOTION_REDUCED` are module-private for
+exactly this reason — a component cannot import one and silently ignore `prefers-reduced-motion` —
+and every exported helper takes the tokens as a required argument. `motion.ts` exports only what
+has a consumer — `useMotionTokens`, `dissolve`, `layerDelay`, `panelTransition`, and
+`prefersReducedMotion` for the field's non-React frame loop. Widen that surface only for a caller
+that already exists.
 
 Settled with the numbers:
 
@@ -339,7 +344,7 @@ What each may and may not do. Anything not listed is not allowed to appear.
 #### The masthead
 
 抹茶 at `--text-kanji-sm`, then `MATCHA COCONUT LAB` at `--text-label` — on one line in landscape,
-stacked in portrait, per the references.
+stacked everywhere else, per the references.
 
 **In landscape only,** a 1px accent hairline drops from the very top edge of the viewport down past
 the kanji, sitting exactly on the left content margin — a printer's registration tick, and the only
@@ -391,14 +396,21 @@ fill on the field.
 #### The title block
 
 Romaji at `--text-romaji` in `--color-accent`, drink name at `--text-title`, then the ingredient
-line and kanji gloss on one `--text-detail` row separated by an em dash.
+line on one `--text-detail` row.
+
+**The kanji gloss joins that row after an em dash in landscape only.** Everywhere else the row has
+to share its width with the recipe affordance, and the gloss is the least load-bearing thing in
+it — it survives in the recipe overlay's footer, which is where the portrait reference puts it.
 
 May not: gain a description, a price, a rating, a CTA button, or a second paragraph.
 
 #### The recipe affordance
 
-An accent hairline, then `作り方`, then `RECIPE →`. It is a button, not a link, and the whole
-row is the target.
+`作り方`, then `RECIPE →`. It is a button, not a link, and the whole group is the target.
+
+**In landscape an accent hairline precedes them and the three sit on one row; everywhere else the
+two labels stack, right-aligned, and the rule is dropped** — `ref-1-portrait.png` draws it that
+way, and there is no width for a horizontal rule beside a stacked pair.
 
 May not: become a filled button, gain a border, or move away from the bottom-right group.
 
@@ -409,13 +421,21 @@ the paper — drawn on the scrim, landing exactly on the main view's content mar
 UI's dialog primitive — focus trap, escape, scroll lock and ARIA come free, and hand-rolling them
 is a mistake.
 
+- **The frame and the 14px margin it sits on are `land`/`port` only.** Compact has room for
+  neither, so there the panel fills the viewport inside the safe area and the frame is hidden. A
+  phone showing no frame is the contract, not a regression to fix.
 - **The frame is on the field side, so it takes a field-side ink role: `--color-on-field-muted`,
   never `--color-hairline`.** Ink at 20% over a scrim is invisible. The reference measures the
   frame as paper at ~67% — see
   [Layout geometry](./docs/design/layout-geometry.md#recipe-overlay--ref-3-recipepng).
 - One shadow in the whole app: `0 40px 120px -40px oklch(from var(--color-field-deep) 0.22 c h / 0.5)`.
 - The frame belongs to the panel, not the backdrop, so the two arrive as one object.
-- Container queries drive its internals. Its children respond to the panel, not the viewport.
+- Container queries drive its internals, on `container-type: size` — the panel's rhythm is `cqh`
+  and `cqmin`. Its children respond to the panel, not the viewport.
+- **The panel holds four groups — the render, `材料 BUILD`, `手順 METHOD`, `味 TASTING NOTE` — and
+  drops the render once its own short axis is under 600px.** All four do not fit below that line,
+  and the render is the one that goes: it is the largest of them, and the only one repeating what
+  the stage was showing a tap ago. Restoring it at phone sizes brings the scrollbar back.
 - No nested scrolling, at any target viewport, ever.
 
 #### The favourite toggle

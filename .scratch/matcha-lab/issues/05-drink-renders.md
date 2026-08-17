@@ -25,6 +25,27 @@ Both are now automated checks in the script, because finding them by eye was luc
 1254²), distinct colours ≥ 2,000 (a measured PIL fake had 664; real ones run 15k–72k), min alpha
 = 255, corner colour within 18 of `123,143,99`.
 
+**Then all nine were replaced by hand, outside the script, and every one of those checks was
+skipped.** The recipe panel wanted the drawing to sit on its recessed paper well, and the assets
+were rewritten transparent to make that happen: 4-channel, `opaque=False`, 3.9 MB — eight times
+what the pipeline emits. `scripts/generate-render.sh` was not touched, so the pipeline still
+asserted an opaque ground and would have discarded every file that shipped.
+
+That is the same defect as 透 TŌ, arriving through the one door the guard does not watch: the
+guard runs when the script runs, and nothing forced the script to run. It was caught by drawing a
+shipped render to a canvas and reading the corner pixel — `0,0,0,0`. `identify` alone would have
+caught it too; nobody ran it, because the assets were not supposed to have changed.
+
+`./scripts/generate-render.sh reconvert` restored the pipeline's own output byte for byte, which
+is also the proof the pipeline is reproducible. **Every change to what ships goes through the
+script.** Hand-editing an asset silently opts out of the ground guarantees the whole ticket exists
+to enforce.
+
+The panel was the real problem and it had a one-line answer: the well's `bg-paper-shade` is the
+*empty state's* fill, which is exactly what `ref-3-recipe.png` shows — the reference never
+contains a render at all, only the dashed drop-zone. The fill moved onto the placeholder and the
+render sits in the panel as an opaque plate, the same asset the stage uses.
+
 One trap worth recording: ImageMagick's `-evaluate add` takes **quantum units, not 8-bit levels**.
 On a Q16 build `add 6` shifts by 6/65535 and does nothing — silently, with no error. The first
 attempt at ground normalisation "succeeded" and changed nothing. Percent of QuantumRange is the

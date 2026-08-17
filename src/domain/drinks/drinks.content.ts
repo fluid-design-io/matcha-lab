@@ -10,7 +10,7 @@
  * its provenance as a doc comment rather than a field, because nothing renders it — but the next
  * person to edit a tasting note has to read it first.
  */
-import type { Axis, AxisKey, Drink, MatchaBase, ServeTemperature } from './drinks.types'
+import type { Axis, Drink, MatchaBase, ServeTemperature } from './drinks.types'
 
 /**
  * Every one of the nine is *matcha base + N other ingredients*, N = 0–4.
@@ -37,10 +37,6 @@ export const AXES: readonly Axis[] = [
   { key: 'fresh', kanji: '涼', name: 'fresh' },
   { key: 'level', kanji: '濃', name: 'level' },
 ]
-
-export const AXIS_BY_KEY: Readonly<Record<AxisKey, Axis>> = Object.fromEntries(
-  AXES.map((axis) => [axis.key, axis]),
-) as Record<AxisKey, Axis>
 
 /**
  * Serve temperature as authored copy. Set at `--text-label`; there is no icon for it — the

@@ -5,7 +5,7 @@
 
 import { useSyncExternalStore } from 'react'
 
-export type SpringToken = {
+type SpringToken = {
   /** Seconds to visually reach the target. The bouncy part, if any, happens after. */
   readonly visualDuration: number
   /** 0 is no bounce, 1 is extremely bouncy. This design lives at or near 0. */
@@ -33,7 +33,7 @@ export type MotionTokens = {
  * Front to back. Each layer's delay is its index times `stagger`, which is what produces the sense
  * of depth: the things nearest the reader move first, the atmosphere moves last.
  */
-export const MOTION_LAYERS = [
+const MOTION_LAYERS = [
   'title',
   'romaji',
   'detail',
@@ -44,7 +44,10 @@ export const MOTION_LAYERS = [
 
 export type MotionLayer = (typeof MOTION_LAYERS)[number]
 
-/** Tokens are required, not defaulted, so no caller can bypass `useMotionTokens()` by accident. */
+/**
+ * Tokens are a required argument and both token objects are module-private, so every caller
+ * reaches them through `useMotionTokens()` and its `prefers-reduced-motion` handling.
+ */
 export function layerDelay(layer: MotionLayer, tokens: MotionTokens): number {
   return MOTION_LAYERS.indexOf(layer) * tokens.stagger
 }
@@ -53,7 +56,7 @@ export function layerDelay(layer: MotionLayer, tokens: MotionTokens): number {
  * Calibrated by a human at 1366×1024 against four candidates: a whisper of travel plus a slight
  * defocus. Four pixels of rise is enough to feel a direction and not enough to see one.
  */
-export const MOTION: MotionTokens = {
+const MOTION: MotionTokens = {
   stagger: 0.04,
   layer: { visualDuration: 0.38, bounce: 0 },
   watermark: { visualDuration: 1, bounce: 0 },
@@ -68,7 +71,7 @@ export const MOTION: MotionTokens = {
  * movement, no defocus. Not "no feedback" — every state change still reads, it just stops
  * travelling.
  */
-export const MOTION_REDUCED: MotionTokens = {
+const MOTION_REDUCED: MotionTokens = {
   stagger: 0,
   layer: { visualDuration: 0.12, bounce: 0 },
   watermark: { visualDuration: 0.12, bounce: 0 },
@@ -93,7 +96,7 @@ function layerDistance(
     : { drift: tokens.drift, blur: tokens.blur }
 }
 
-export type DissolveVariants = {
+type DissolveVariants = {
   initial: { opacity: number; y: number; filter: string }
   animate: { opacity: number; y: number; filter: string }
   exit: { opacity: number; y: number; filter: string }

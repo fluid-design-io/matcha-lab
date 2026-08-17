@@ -28,11 +28,13 @@ export function LabShell({ masthead, stage, footer, rail, className }: LabShellP
         "land:[grid-template-areas:'masthead_rail''stage_rail''footer_rail']",
         className,
       )}
+      // Two-value shorthands, so each edge names its own inset rather than depending on later
+      // longhands landing after the ones they correct.
       style={{
-        paddingInline: 'max(var(--edge), env(safe-area-inset-left))',
-        paddingBlock: 'max(var(--edge), env(safe-area-inset-top))',
-        paddingBottom: 'max(var(--edge), env(safe-area-inset-bottom))',
-        paddingRight: 'max(var(--edge), env(safe-area-inset-right))',
+        paddingInline:
+          'max(var(--edge), env(safe-area-inset-left)) max(var(--edge), env(safe-area-inset-right))',
+        paddingBlock:
+          'max(var(--edge), env(safe-area-inset-top)) max(var(--edge), env(safe-area-inset-bottom))',
       }}
     >
       <div className="[grid-area:masthead]">{masthead}</div>

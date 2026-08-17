@@ -16,16 +16,16 @@ grid would only be a cell it ignores.
 | `recipe.overlay.tsx` | Base UI dialog, scrim, hairline frame, the way the panel arrives |
 | `recipe.panel.tsx` | The paper: the rhythm variables, and the arrangement that turns |
 | `recipe.header.tsx` | 凪 · NAGI — name, and `Xmark` |
-| `recipe.render.tsx` | The render, reused at smaller scale, in a `--color-paper-shade` well |
 | `recipe.build.tsx` / `recipe.method.tsx` / `recipe.tasting.tsx` | The three groups |
 | `recipe.label.tsx` | The `材料 / BUILD` heading, shared by two of the three |
 | `recipe.footer.tsx` / `recipe.favourite.tsx` | Gloss, serve, base temperature, `♥ SAVED` |
 
 `recipe.panel.tsx` is split from `recipe.overlay.tsx` so the paper knows nothing about dialogs,
 portals or motion. Nothing here is exported past `index.ts` — the panel reads the selected drink
-and the open flag off `lab.context`, so there are no props to thread. The dashed empty/loading
-frame is not in this folder at all: it is one leaf, `src/screens/lab/lab.placeholder.tsx`, taking a
-`tone` of `field` or `paper`, shared with the stage.
+and the open flag off `lab.context`, so there are no props to thread. The render is not in this
+folder at all: image, dashed loading frame and caption are one leaf,
+`src/screens/lab/lab.render.tsx`, taking a `tone` of `field` or `paper` and shared with the stage.
+The panel owns only the `--color-paper-shade` well around it.
 
 ### The overlay had no stacking position, and nothing in it could be touched
 
@@ -90,11 +90,22 @@ The container is the **popup**, and two details are easy to get wrong and expens
   The padding lives on the paper element inside the container instead.
 
 Tailwind's `@[…]` sugar only generates width queries (`@[aspect-ratio>=1]:` compiles to the nonsense
-`@container (width >= aspect-ratio>=1)`), so every query here is written as an arbitrary variant —
-`[@container_recipe_(aspect-ratio>=1)_and_(height>=600px)]:…` — which emits the at-rule verbatim and
-sorts after the unprefixed utilities. **Those strings must be written out in full**; building them
-by concatenating a prefix constant onto a utility looks tidier and produces nothing, because
-Tailwind's scanner only ever sees complete literals in the source.
+`@container (width >= aspect-ratio>=1)`), so the four queries are **named**, in `src/styles.css`,
+next to `land` / `port` / `roomy`:
+
+```css
+@custom-variant recipe-tight      (@container recipe ((width < 600px) or (height < 600px)));
+@custom-variant recipe-wide-roomy (@container recipe ((aspect-ratio >= 1) and (height >= 600px)));
+@custom-variant recipe-wide-tight (@container recipe ((aspect-ratio >= 1) and (height < 600px)));
+@custom-variant recipe-tall-tight (@container recipe ((aspect-ratio < 1) and (width < 600px)));
+```
+
+They were written out as arbitrary variants — `[@container_recipe_(aspect-ratio>=1)_and_(height>=600px)]:…`
+— 23 times in `recipe.panel.tsx` and 5 more in `recipe.build.tsx` before this, which put one design
+constant in two files with no shared definition. `@custom-variant` takes an `@container` at-rule
+just as it takes `@media`: compiled, each emits the same at-rule the arbitrary variant did, all four
+**after** every unprefixed utility, in declaration order. That ordering is the file's one cascade
+assumption and it was checked against the compiler rather than assumed.
 
 #### Four arrangements, on two questions about the panel's own box
 
@@ -156,8 +167,9 @@ where it is the tightest tablet's 652px. A plain `6.3cqmin` also reproduces the 
 hands 1024×768 41px of padding, which measured out at **8px** of remaining slack on 深 SHIN; the
 ramp restores it to 41px. Tight panels take a flat 16px instead.
 
-`--panel-pad` in `src/styles.css` now has **no consumer anywhere in `src/`** — removing it belongs
-to whoever owns that file.
+`--panel-pad` had **no consumer anywhere in `src/`** after that, and is now deleted from
+`src/styles.css` — both declarations, the `:root` 28px and the `roomy` 56px.
+`docs/design/layout-geometry.md` still names it in two places and needs the same edit.
 
 ### Compact: a fourth arrangement, not a suppressed control
 
@@ -224,7 +236,7 @@ two-variable rule, which container queries cannot express without a second conta
 would put the four target viewports at risk to serve a window size nobody asked for. Left as is,
 with the numbers above so the next person does not have to rediscover them.
 
-### The second fade, and the placeholder that existed twice
+### One render leaf, after the same thing was solved twice
 
 `recipe.render.tsx` gated its image on `onLoad` alone plus `transition-opacity duration-300`.
 `RecipePanel` mounts fresh on every open, so `loadedSrc` started `null` and `onLoad` — a task —
@@ -247,11 +259,31 @@ The dashed frame had also been written twice — `RenderFramePlaceholder` in `la
 inline block in `recipe.render.tsx` — same dashed border, same `gap-3`, same 20×20 `Picture`, same
 `<romaji> · render` caption, already drifting (`size-full` versus `absolute inset-0`).
 `DESIGN-TASTE.md` calls it "the **only** surviving trace" of the mockups' drop-zone, singular, so it
-is now one leaf at `src/screens/lab/lab.placeholder.tsx` taking `tone="field"` or `tone="paper"`.
-The tone sets the colour once on the wrapper and the `Picture` inherits it through `currentColor`,
-which the design contract asks for and neither copy did. Both call sites measure the same box:
-`absolute inset-0` inside the stage's layer resolves to 369×369 at 1024×768, identical to the
-`size-full` it replaced.
+was pulled out to one leaf taking `tone="field"` or `tone="paper"`. The tone sets the colour once on
+the wrapper and the `Picture` inherits it through `currentColor`, which the design contract asks for
+and neither copy did. Both call sites measure the same box: `absolute inset-0` inside the stage's
+layer resolves to 369×369 at 1024×768, identical to the `size-full` it replaced.
+
+**That left the load rule itself written twice, which was the same mistake one level up.**
+`RenderImage` in `lab.stage.tsx` and `RecipeRender` in `recipe/recipe.render.tsx` each carried a
+`measure` ref callback reading `node.complete`, a near-identical comment about why `onLoad` is too
+late, the same `absolute inset-0 size-full object-contain` image, the same `opacity` swap and the
+same `` `${drink.romaji} · render` `` caption — over two different state models, the stage's
+`useState(false)` boolean and the panel's `useState<string | null>`. The panel's own comment said
+why the boolean was wrong, and the stage was the boolean.
+
+They are now **one leaf, `src/screens/lab/lab.render.tsx`, exporting `LabRender`**, with the
+placeholder as an internal component in the same file — neither is ever used without the other, and
+the caption string and the load rule now have one home. The src-keyed state is the one that
+survived. `lab.placeholder.tsx` and `recipe/recipe.render.tsx` are both gone; the stage passes
+`tone="field"` inside its dissolving layer, the panel passes `tone="paper"` inside the
+`bg-paper-shade` well it still owns. Everything else is preserved: the stage's `LabLayer` keying,
+the `neighbourRenders` warming in `lab.stage.tsx`, the empty `alt` on both, `draggable={false}`
+(which the panel's copy lacked and now has — the only attribute that got wider).
+
+Re-verified live: the incoming image reads `complete: true` at `opacity: 1` on both surfaces, the
+panel well measures 367px at 1024×1366 with the image in it, and **no placeholder element enters the
+document at all** — on first open, on a rail tap, or on a drink change mid-dissolve.
 
 ### Verification — and the blind spot in the technique that came before it
 
@@ -330,11 +362,20 @@ regression: it rendered the paper without a dialog around it, and it is now reti
 
 ### Traps that cost real time
 
-- **Tailwind cannot generate a class it never sees written out.** These container-query variants are
-  long enough that composing them (`WIDE + 'grid-cols-…'`, or a small `v(variant, classes)` helper)
-  is the obvious tidy-up. It silently produces nothing: the scanner matches complete literals in the
+- **Tailwind cannot generate a class it never sees written out.** While these were arbitrary
+  variants, composing them (`WIDE + 'grid-cols-…'`, or a small `v(variant, classes)` helper) was the
+  obvious tidy-up and it silently produced nothing: the scanner matches complete literals in the
   source, so the variant string and the utility string are found separately and the combined
-  candidate never exists. Repeat the whole thing on every line.
+  candidate never exists. Naming the query in `@custom-variant` is the move that actually works —
+  the literal in the source is then just `recipe-tight:hidden`.
+- **`cn()` eats every `text-*` size utility that shares a call with a `text-*` colour.** `twMerge`
+  runs with the stock config, which knows nothing of `--text-quantity` or `--color-on-paper`, so it
+  classifies both as text-colour and keeps only the last: `cn('text-quantity … text-on-paper')`
+  ships as `text-on-paper` alone and the quantity sets at the inherited 16px, not 30px. That is a
+  live defect in `src/lib/utils.ts`, it is **not** fixed here, and the `cn()` wrapper on the
+  quantity `<p>` in `recipe.build.tsx` is load-bearing until it is — dropping it restores the real
+  size and the panel's measured no-overflow guarantee has never been checked at that size. Full
+  write-up in [Rail interaction](./10-rail-interaction.md), where it is most visible.
 - **A regex over string literals is not a Tailwind scanner.** The earlier static harness extracted
   candidate classes with a quoted-string regex; every apostrophe in a doc comment ("Base UI's",
   "the panel's") opened a phantom string that swallowed the real `className` after it. The result
@@ -373,6 +414,17 @@ regression: it rendered the paper without a dialog around it, and it is now reti
   14px` inside four `calc()`s and `-inset-3.5` on the hairline frame — which had to stay equal and
   would not have been changed together. Both read `--recipe-frame`, set once on the popup, which is
   also what lets compact take it to `0px`.
+- **`RecipeFavourite`'s target reads `--tap` instead of arriving at 44 by hand.** It was `-my-4 …
+  py-4` around a 12px glyph — 16 + 12 + 16 — with a comment explaining the arithmetic, in the same
+  folder where `RecipeHeader`'s close control already used `size-(--tap)`. It is now
+  `h-(--tap)` with `my-[calc((0.75rem - var(--tap))/2)]` cancelling the growth, so the token names
+  the target and the offset derives from it. The button's border box, position, size and margin are
+  unchanged at every viewport; only the `padding` shorthand moved, and `elementFromPoint` still
+  resolves to the button from −21px to +21px of its centre and to the footer beyond.
+- **`RecipePanel`'s docblock was three paragraphs.** It restated the container-box requirement, then
+  the 600px measurement history, then Tailwind's variant emission order — all of which live in this
+  file, above. It is one sentence and a constraint now. The measurements were already recorded here
+  and are unchanged; the emission-order note moved up into the container-query section.
 
 ## Question
 

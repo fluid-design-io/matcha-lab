@@ -94,6 +94,40 @@ Reached when the core loop — *select drink → view drink → open recipe → 
   never runs and outgoing layers pile up in the DOM. That looks exactly like an AnimatePresence
   bug and is not one — anything frame-driven must be checked in a real browser window.
   — [Motion calibration](./issues/09-motion-calibration.md)
+- The rail is one component that reflows, and the portrait bug was that nothing gave it a
+  cross-axis size — nine slots measured zero and every glyph piled into a 28 px strip. `--rail-band`
+  and `--rail-row` are `:root` tokens rather than utilities because `roomy:` is registered after
+  `land:`, so a `roomy:pt-*` would beat `land:pt-0`.
+  — [Orientation adaptation](./issues/08-orientation.md)
+- Selection has three inputs — tap, swipe, arrow keys — all through `step`/`select` on
+  `LabProvider`. The underline is one `layoutId` element, and Motion skips a layout animation only
+  when `MotionConfig` says so: `useMotionTokens()` cannot reach it, so without
+  `<MotionConfig reducedMotion="user">` reduced motion made the underline travel 864 px in 120 ms,
+  *faster* than with motion on. The drag surface must not translate with the drag — pass `_dragX`,
+  or it covers the rail during snap-back and eats taps.
+  — [Rail interaction](./issues/10-rail-interaction.md)
+- The recipe overlay is a Base UI dialog whose **panel is its own size container**, so its
+  arrangement switches on the panel's aspect ratio, never the viewport — the landscape and portrait
+  panels are 24 px apart in width and any threshold between them would be a coincidence. A portal
+  needs an explicit z-index: `fixed` alone resolves to `auto` and the `z-10` shell hit-tests above
+  the whole dialog. Layering is field `z-0` / shell `z-10` / overlay `z-20`.
+  — [Recipe overlay](./issues/11-recipe-overlay.md)
+- **`cn()` was deleting every font-size utility this app defines.** tailwind-merge only knows the
+  stock `text-xs…text-9xl` scale, so it read `text-kanji-lg` as a colour and dropped it whenever a
+  `text-<role>` colour followed in the same call. The rail kanji, the rail romaji and the recipe
+  quantities all rendered at the inherited 16 px for three phases. `extendTailwindMerge` with the
+  app's own `font-size` group fixes it — **add a `--text-*` token, add it to that list.**
+  — [Viewport verification pass](./issues/13-viewport-pass.md)
+- **Every change to what ships goes through `scripts/generate-render.sh`.** All nine renders were
+  once replaced by hand to make them transparent for the recipe panel's paper well — 4-channel,
+  8× the weight, and the pipeline that guarantees the ground would have discarded every one of
+  them. The panel's `bg-paper-shade` is the *empty state's* fill, which is what `ref-3-recipe.png`
+  actually shows; the render sits on it as an opaque plate.
+  — [Nine generated drink renders](./issues/05-drink-renders.md)
+- Static host, and `.output/public/` is the whole artefact — no server functions, no loaders.
+  `spa.prerender.outputPath: '/index'` emits the shell as `index.html`, so `/` resolves anywhere
+  with no rule. Netlify, configured by files in the repo rather than dashboard state.
+  — [Pick a host](./issues/14-pick-a-host.md)
 
 ## Not yet specified
 

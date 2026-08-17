@@ -5,7 +5,9 @@ single-viewport iPad web app: nothing scrolls, nothing stacks, and the only thin
 the things you touched.
 
 Built with TanStack Start in SPA mode, TanStack Router, TanStack Store, Tailwind v4, Base UI,
-Motion, and TypeGPU for the WebGPU field. It installs to the iPad home screen and runs standalone.
+Motion, Gravity UI icons, and TypeGPU for the WebGPU field. Both typefaces are subset and
+self-hosted from `src/assets/fonts/`, so it launches from a cold cache with no network. It installs
+to the iPad home screen and runs standalone.
 
 ## Getting started
 
@@ -28,7 +30,7 @@ it. There is no software fallback, deliberately.
 | `bun run typecheck` | `tsc --noEmit` |
 | `bun test` | Unit tests (bun's runner) |
 | `bun run generate-routes` | Regenerate `routeTree.gen.ts` after adding a route file |
-| `bun run fonts` | Re-subset the two `.woff2` faces — run after adding a kanji to any string |
+| `bun run fonts` | Re-subset the two `.woff2` faces — run after adding any Japanese glyph to a string |
 | `bun run renders` | Regenerate the nine drink renders |
 
 ## Read before changing anything
@@ -52,6 +54,7 @@ src/
   components/       shared, multi-part UI
   domain/           content and state, no React components
   screens/lab/      the one route surface
+  prototypes/       the motion calibration instrument, behind its own route
   routes/           thin TanStack Router wrappers
   lib/              motion tokens and helpers
   styles.css        the token system

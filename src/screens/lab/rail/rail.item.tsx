@@ -56,14 +56,15 @@ export function RailItem({ drink, selected, onSelect }: RailItemProps) {
             {drink.kanji}
           </span>
 
-          {/* Portrait labels every glyph; landscape labels only the selected one and rotates it.
-              Both are absolutely positioned, so neither can change the slot's pitch. */}
+          {/* Only the tablet-portrait rail has the width to name the whole collection; everywhere
+              else the nine words collide, so only the selected one shows. Both placements are
+              absolute, so neither can change the slot's pitch. */}
           <span
             aria-hidden
             className={cn(
               'text-micro absolute top-[70%] left-1/2 -translate-x-1/2 untrack uppercase',
               'land:top-1/2 land:left-[82%] land:-translate-x-0 land:-translate-y-1/2 land:[writing-mode:vertical-rl]',
-              selected ? 'text-on-field-muted' : 'text-on-field-faint land:opacity-0',
+              selected ? 'text-on-field-muted' : 'text-on-field-faint opacity-0 port:opacity-100',
             )}
           >
             {drink.romaji}

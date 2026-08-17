@@ -144,7 +144,7 @@ is the hit target" in [Orientation adaptation](./08-orientation.md).
 One target still misses 44px: a 393px phone, where nine slots come to 43.67px wide. Nine 44px
 targets need 396px, so this is a property of the screen rather than a choice.
 
-### Portrait labels every glyph, and that is the rule
+### Portrait labels every glyph — where there is width to
 
 Both this ticket's brief and DESIGN-TASTE said "romaji appears for the selected one", while
 `rail.item.tsx` renders all nine in portrait and only hides the unselected ones in landscape
@@ -153,7 +153,51 @@ runs SUI through SHIN along the bottom, `ref-4-landscape.png` carries NAGI and n
 `layout-geometry.md`'s portrait table already said "beneath each glyph". A horizontal rail has the
 width to name the whole collection; a vertical one does not, and nine rotated words down the right
 edge would argue with the watermark. DESIGN-TASTE § The rail now states it as an
-orientation-dependent rule rather than a single behaviour. No code change.
+orientation-dependent rule rather than a single behaviour.
+
+**The compact rail does not have that width either, and it was labelling all nine anyway.** Below
+the `port` breakpoint the pitch is `min(52px, 100svw / 9)` — 43.7px at 393 — and the labels are
+absolutely positioned, so nothing stops them running into their neighbours. Measured at 393×852:
+KUMO ended at `x 133.4` against KAGE starting at `130.8`, and ICHIGO at `356.2` against SHIN at
+`351.9`. On screen that reads as `KUMOKAGE` and `ICHIGOSHIN`. At 852×393 it is the same failure with
+a 52px pitch and a 57.3px ICHIGO.
+
+The rule the rail already had is the fix: label every glyph **only where there is width for it**.
+The unselected label is now `opacity-0` at the base with `port:opacity-100`, replacing
+`land:opacity-0` — so tablet portrait names the collection, and landscape *and* compact name only
+the selection. One class less than before, and the phone gets landscape's answer for landscape's
+reason. Verified by rect: at 393×852 exactly one label is visible and no two visible label boxes
+intersect; at 1024×1366 and 768×1024 all nine are still visible and **every element in the document
+measures byte-identical to before the change**, in both orientations, with the recipe shut and open.
+
+Phones stay nice-to-have polish. Overlapping type is not polish.
+
+### The rail's whole type scale is dead, and it is `cn()` doing it
+
+Not fixed here — it is `src/lib/utils.ts` — but it has to be written down, because the overlap above
+is a symptom of it and anyone measuring the rail will be measuring the wrong numbers.
+
+`cn()` is `twMerge(clsx(...))` with the **stock** tailwind-merge config. Stock knows `text-xs`,
+`text-lg` and arbitrary values; it does not know `--text-kanji-lg` or `--color-on-field-faint`, so
+it classifies **both** as text-colour, decides they conflict, and keeps the last one:
+
+```
+twMerge('text-kanji-md text-on-field-faint')        → 'text-on-field-faint'
+twMerge('text-micro untrack uppercase text-on-field-faint') → 'untrack uppercase text-on-field-faint'
+twMerge('text-quantity tnum mt-2 shrink-0 text-on-paper')   → 'tnum mt-2 shrink-0 text-on-paper'
+```
+
+Read off the running app at 1024×1366: **every rail kanji computes to 16px** — selected and
+unselected alike, against the design's 32px and 24px — **and every romaji to 16px with
+`letter-spacing: normal`**, against 9px at 0.26em. The class simply is not in the DOM. Only `cn()`
+call sites are affected; a plain `className` string carrying a size and a colour is fine, which is
+why the footer, the masthead and the recipe header look right and the rail does not.
+
+The fix is `extendTailwindMerge` with the project's font-size keys, in `src/lib/utils.ts`. It is
+deliberately **not** done in this pass: it changes what renders at every viewport, including both
+masters and including the recipe panel's quantities, and the panel's no-overflow guarantee has only
+ever been measured at the sizes that ship today. It wants its own pass with the overflow checker
+re-run. Until then, treat `cn()` around a size + colour pair as load-bearing.
 
 ### Two things reconciled rather than stacked
 
@@ -162,7 +206,10 @@ orientation-dependent rule rather than a single behaviour. No code change.
   from placeholder to image — invisible on a warm render, honest on a cold one. The neighbours are
   preloaded, and `complete` is read in the ref callback (which runs in the commit, before paint)
   rather than waiting for `onLoad`, because otherwise the placeholder flashes for one frame on
-  every change and some engines never fire `onLoad` for a cached image at all.
+  every change and some engines never fire `onLoad` for a cached image at all. That rule lives in
+  **one leaf now, `src/screens/lab/lab.render.tsx`** — the recipe panel had grown its own copy of
+  it. `LabStage` renders `<LabRender tone="field">` inside its dissolving layer; nothing about the
+  image is written in `lab.stage.tsx` any more.
 - **The title's accessible copy.** `AnimatePresence` keeps the outgoing drink mounted, so a naive
   version has two `<h1>`s and two `alt`s in the DOM for the length of every transition. The three
   visible footer layers are now `aria-hidden`, the render's `alt` is empty (every word it could

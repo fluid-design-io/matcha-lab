@@ -5,7 +5,7 @@
  * That is derived here rather than authored in `drinks.content.ts`, so it stays true if a number
  * changes. Nothing in this file is stateful; it is all pure functions over `DRINKS`.
  */
-import { AXES, AXIS_BY_KEY, DRINKS } from './drinks.content'
+import { AXES, DRINKS } from './drinks.content'
 import type { Axis, AxisKey, Drink, DrinkId } from './drinks.types'
 
 type AxisStats = {
@@ -104,9 +104,4 @@ function pickExtreme(drink: Drink, end: 'min' | 'max'): Axis | null {
       Math.abs(drink.axes[axis.key] - AXIS_STATS[axis.key].mean)
     return distance(candidate) > distance(best) ? candidate : best
   })
-}
-
-/** The axis identity for a key, for components that hold only a key. */
-export function getAxis(key: AxisKey): Axis {
-  return AXIS_BY_KEY[key]
 }
