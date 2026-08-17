@@ -307,12 +307,13 @@ the only lever for weight.
 **Only use box sizes 12, 16, or 20px** — halves and multiples of the 16 grid land on whole pixels
 and stay crisp. `13px` and `18px` produce a soft, slightly grey glyph.
 
-The app needs two icons. That is the whole list:
+The app needs three icons. That is the whole list:
 
 | Use | Icon | Box | Effective stroke | Pairing |
 | --- | --- | --- | --- | --- |
 | Close the recipe overlay | `Xmark` | 16px | 1.5px | Standalone. 44px hit area, invisible. |
 | Empty / loading render frame | `Picture` | 20px | 1.88px | Above an 11px caption, inside the dashed frame. |
+| The masthead's source link | `LogoGithub` | 16px | 1.5px | Standalone, at `--color-on-field-muted`. 44px hit area, invisible. |
 
 **Ruled out, deliberately:**
 
@@ -346,7 +347,12 @@ vertical rule in the app. It escapes the shell's top padding with a negative off
 edge. Portrait has no tick: `ref-1-portrait.png` does not draw one, and a vertical rule above a
 stacked masthead reads as a margin marker rather than as registration.
 
-May not: gain a logo, a nav, a tagline, or a second line.
+**On the opposite content margin sits the source link** — `LogoGithub` at 16px in
+`--color-on-field-muted`, rising to `--color-on-field-strong` on hover. Its 44px target bleeds 14px
+past the glyph on three sides, so the ink stays on the right content margin and on the 抹茶 line
+rather than growing the masthead row. It is the only outbound link in the app.
+
+May not: gain a nav, a tagline, a second line, or a second link.
 
 #### The rail
 
