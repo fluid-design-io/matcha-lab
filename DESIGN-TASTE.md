@@ -191,25 +191,40 @@ Edge margins:
 
 ### 4. Motion
 
-> **CALIBRATION PENDING — ticket 09.** The shape below is settled; the numbers are candidates
-> until a human picks. Do not ship a transition that has not come out of that prototype, and
-> when it lands, rewrite this section with the chosen values and delete this note.
-
 The one transition that matters is the **drink change**: a staggered cross-dissolve where every
 layer lags the one before it and the giant watermark kanji moves **last and slowest**. Depth
 without 3D. Layer order, front to back:
 
 `title → romaji → ingredient line → render → rail → watermark`
 
-Tokens:
+**Calibrated at 1366×1024 against four candidates responding to one trigger — ticket 09. The pick
+is candidate B, *a whisper of travel*, plus a slight defocus.** Four pixels of rise is enough to
+feel a direction and not enough to see one; two pixels of blur at the far end reads as the layer
+settling into focus rather than as an effect.
 
-| Token | Meaning |
-| --- | --- |
-| `--motion-stagger` | Delay added per layer, in order above. |
-| `--motion-spring` | The spring every dissolving layer uses (`stiffness` / `damping` / `mass`). |
-| `--motion-opacity-floor` | How far down a layer dips mid-transition. `1` = pure cross-fade with no dip. |
-| `--motion-drift` | Distance a layer travels, if any. Candidate A is `0` — opacity only. |
-| `--motion-watermark` | The watermark's own, slower spring. |
+| Token | Value | Meaning |
+| --- | --- | --- |
+| `--motion-stagger` | `40ms` | Delay added per layer, in the order above. |
+| layer spring | `visualDuration 0.38s`, `bounce 0` | The spring every dissolving layer uses. |
+| `--motion-drift` | `4px` | Distance a layer travels. In from below, out upward. |
+| `--motion-blur` | `2px` | Defocus at the far end of the dissolve. |
+| watermark spring | `visualDuration 1s`, `bounce 0` | The watermark's own, slower spring. |
+| `--motion-watermark-drift` | `9px` | It travels further, because it is furthest away. |
+| `--motion-watermark-blur` | `4px` | And defocuses further, for the same reason. |
+| `--motion-opacity-floor` | `0` | A layer fades fully out. Its replacement is already fading in. |
+
+The springs cannot be expressed in CSS, so `src/lib/motion.ts` is the single source and the CSS
+custom properties above exist only so a Tailwind `transition-*` in the same composition can keep
+pace with a Motion spring. **Read tokens through `useMotionTokens()`** — never import `MOTION`
+directly into a component, or that component will ignore `prefers-reduced-motion`.
+
+Settled with the numbers:
+
+- **A multi-step jump gets the same transition as a single step.** Scaling the stagger by distance
+  makes 01 → 09 feel like a heavier interaction than 01 → 02, and the collection is nine peers,
+  not a timeline. One response to one change.
+- **The watermark's slower spring is doing real work** and stays. It is the only thing that says
+  the composition has depth, and at `blur(4px)` over one second it is the last thing to settle.
 
 Fixed regardless of calibration:
 
@@ -219,7 +234,7 @@ Fixed regardless of calibration:
   elements fading in and out.
 - **`prefers-reduced-motion` keeps every state change but removes the travel.** The field stops
   drifting and holds; the drink change collapses to a single 120ms opacity cross-fade with no
-  stagger and no movement. Reduced motion must never mean "no feedback".
+  stagger, no movement and no defocus. Reduced motion must never mean "no feedback".
 - **Only animate `opacity`, `transform`, and `filter`.** Nothing that triggers layout. The one
   exception is the shared rail underline, where Motion's `layout` prop reads and inverts the
   layout itself.

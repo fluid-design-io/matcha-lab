@@ -1,8 +1,43 @@
 # Motion calibration
 
 Type: prototype
-Status: **awaiting the human**
+Status: resolved
 Blocked by: 07
+
+## Answer
+
+**Candidate B, "a whisper of travel", plus a slight defocus.** Picked by the human at 1366×1024
+with all four responding to one trigger.
+
+| | Value |
+| --- | --- |
+| Stagger | `40 ms` per layer, in `title → romaji → detail → render → rail → watermark` order |
+| Layer spring | `visualDuration 0.38 s`, `bounce 0` |
+| Drift | `4 px` — in from below, out upward |
+| Blur | `2 px` at the far end of the dissolve |
+| Watermark spring | `visualDuration 1 s`, `bounce 0` |
+| Watermark drift / blur | `9 px` / `4 px` |
+
+The blur was asked for after the four were judged, so it is not in the original candidate table.
+Every candidate now carries a proportionate value (A `0`, B `2`, C `4`, D `9`) so the prototype
+still measures what shipped rather than a version of it that no longer exists.
+
+The two questions left open for the human to answer while watching:
+
+- **A multi-step jump gets the same transition as a single step.** Scaling the stagger by distance
+  makes 01 → 09 feel like a heavier interaction than 01 → 02, and the collection is nine peers,
+  not a timeline.
+- **The watermark's slower spring stays.** It is the only thing saying the composition has depth,
+  and at `blur(4px)` over one second it is the last thing to settle.
+
+Landed in `src/lib/motion.ts` (`MOTION`, `MOTION_REDUCED`, and the `dissolve()` helper both the
+app and the prototype build their variants from) and in `DESIGN-TASTE.md` § Motion. The CSS
+custom properties in `src/styles.css` exist only so a Tailwind `transition-*` can keep pace with a
+spring — springs are not expressible in CSS and `motion.ts` is the single source.
+
+**Components must read tokens through `useMotionTokens()`**, never by importing `MOTION`. That
+hook is what makes `prefers-reduced-motion` work, and it listens rather than reading once: iPadOS
+flips the setting from Control Centre without a reload, and a home-screen app is never reloaded.
 
 ## Prototype
 
@@ -33,22 +68,8 @@ D exists to bracket the range rather than to win. You cannot judge "too subtle" 
 Layer order is `title → romaji → detail → render → rail → watermark`, each lagging the one before
 by `stagger`, with the watermark on its own slower spring — depth without 3D.
 
-## Blocked on
-
-**A human has to pick.** Ticket says so, and it is right: *"so subtle that only someone paying
-close attention notices it"* is a taste judgement that cannot be settled by reasoning about
-numbers.
-
-Also still open, and best answered while watching it:
-
-- Should a **multi-step jump** differ from a single step?
-- Is the **watermark's** slower spring doing the work, or should it simply not move at all?
-
-Once picked, the numbers go into `src/lib/motion.ts` (which currently holds candidate C as a
-placeholder, marked `CALIBRATION PENDING`) and into `DESIGN-TASTE.md` § Motion, and the pending
-notes get deleted. `MOTION_REDUCED` there already answers the `prefers-reduced-motion` half: a
-single 120 ms cross-fade, no stagger, no travel — every state change still reads, it just stops
-travelling.
+`MOTION_REDUCED` answers the `prefers-reduced-motion` half: a single 120 ms cross-fade, no
+stagger, no travel, no defocus — every state change still reads, it just stops travelling.
 
 ## Environment note, which cost real time
 

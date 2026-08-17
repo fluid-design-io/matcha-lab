@@ -2,7 +2,7 @@ import { useLayoutEffect, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 
 import { DRINKS, getDrinkRender, type Drink } from '#/domain/drinks'
-import { layerDelay, type MotionLayer, type MotionTokens } from '#/lib/motion'
+import { dissolve, type MotionLayer, type MotionTokens } from '#/lib/motion'
 
 import type { Candidate } from './motion-calibration.candidates'
 
@@ -39,6 +39,9 @@ export function CandidatePanel({ candidate, drink }: { candidate: Candidate; dri
       <figcaption className="flex shrink-0 items-baseline gap-3">
         <span className="text-romaji text-accent untrack">{candidate.key}</span>
         <span className="text-detail text-on-field">{candidate.name}</span>
+        {candidate.chosen ? (
+          <span className="text-micro text-accent untrack uppercase">chosen</span>
+        ) : null}
         <span className="text-detail text-on-field-faint">{candidate.claim}</span>
       </figcaption>
 
@@ -58,7 +61,7 @@ export function CandidatePanel({ candidate, drink }: { candidate: Candidate; dri
 function Composition({ tokens, drink }: { tokens: MotionTokens; drink: Drink }) {
   return (
     <div className="absolute inset-0 overflow-hidden bg-field">
-      <Layer layer="watermark" tokens={tokens} drink={drink} distance={tokens.watermarkDrift}>
+      <Layer layer="watermark" tokens={tokens} drink={drink}>
         <span className="font-jp block select-none text-[450px] font-[200] leading-none text-on-field-ghost">
           {drink.kanji}
         </span>
@@ -115,6 +118,9 @@ function Composition({ tokens, drink }: { tokens: MotionTokens; drink: Drink }) 
 /**
  * One cross-dissolving layer. Old and new overlap absolutely, so this is a true dissolve rather
  * than a fade-out followed by a fade-in.
+ *
+ * The variants come from `dissolve()` in `#/lib/motion`, the same function the app uses. An
+ * instrument that has drifted from the thing it measures is worse than no instrument.
  */
 function Layer({
   layer,
@@ -123,7 +129,6 @@ function Layer({
   children,
   at,
   centred = false,
-  distance,
 }: {
   layer: MotionLayer
   tokens: MotionTokens
@@ -131,10 +136,8 @@ function Layer({
   children: ReactNode
   at?: string
   centred?: boolean
-  distance?: number
 }) {
-  const travel = distance ?? tokens.drift
-  const spring = layer === 'watermark' ? tokens.watermark : tokens.layer
+  const variants = dissolve(layer, tokens)
   const position = layer === 'watermark' ? 'left-[82px] top-1/2' : at
 
   // The wrapper span is a zero-size anchor, so any centring transform has to land on the
@@ -147,15 +150,10 @@ function Layer({
         <motion.span
           key={drink.id}
           className={`absolute block whitespace-nowrap ${offset}`}
-          initial={{ opacity: 0, y: travel }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -travel }}
-          transition={{
-            type: 'spring',
-            visualDuration: spring.visualDuration,
-            bounce: spring.bounce,
-            delay: layerDelay(layer, tokens),
-          }}
+          initial={variants.initial}
+          animate={variants.animate}
+          exit={variants.exit}
+          transition={variants.transition}
         >
           {children}
         </motion.span>

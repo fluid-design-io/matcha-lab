@@ -84,8 +84,12 @@ Reached when the core loop — *select drink → view drink → open recipe → 
   border, so its ground must *be* the field: every image is offset to exactly `#7B8F63`, which is
   what makes the square disappear. Verification now also rejects transparent grounds and drifting
   ones — both were real defects. — [Nine generated drink renders](./issues/05-drink-renders.md)
-- Motion calibration prototype is at `/prototypes/motion` — four intensities driven by one
-  trigger. **Awaiting the human's pick.** Environment note that cost real time: the in-app browser
+- Motion is **candidate B, "a whisper of travel", plus a slight defocus** — 40 ms stagger, a
+  0.38 s / bounce-0 layer spring, 4 px of drift and 2 px of blur, with the watermark on its own
+  1 s spring at 9 px and 4 px. Picked by the human at 1366×1024 from `/prototypes/motion`, four
+  intensities driven by one trigger. A multi-step jump is deliberately identical to a single step.
+  Components read `useMotionTokens()`, never `MOTION` — that is what honours
+  `prefers-reduced-motion`. Environment note that cost real time: the in-app browser
   pane reports `document.hidden` permanently and delivers zero rAF frames, so Motion's frameloop
   never runs and outgoing layers pile up in the DOM. That looks exactly like an AnimatePresence
   bug and is not one — anything frame-driven must be checked in a real browser window.

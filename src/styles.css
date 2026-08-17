@@ -153,11 +153,18 @@
 
   /* -------------------------------------------------------------------------------- motion
    *
-   * CALIBRATION PENDING — ticket 09. The shape is settled; these numbers are candidate C and
-   * are not final until a human has picked. See DESIGN-TASTE.md § Motion. */
+   * Candidate B, "a whisper of travel", plus a slight defocus — ticket 09, picked by a human at
+   * 1366×1024. The springs themselves are not expressible in CSS and live in `src/lib/motion.ts`;
+   * these are the values CSS transitions have to match so a Tailwind `transition-*` and a Motion
+   * spring in the same composition agree. See DESIGN-TASTE.md § Motion. */
   --motion-stagger: 40ms;
   --motion-opacity-floor: 0;
-  --motion-drift: 0px;
+  --motion-drift: 4px;
+  --motion-blur: 2px;
+  --motion-watermark-drift: 9px;
+  --motion-watermark-blur: 4px;
+  /* The visual duration of the layer spring, for CSS-side transitions that have to keep pace. */
+  --motion-layer-duration: 380ms;
   --ease-field: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
