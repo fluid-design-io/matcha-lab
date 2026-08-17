@@ -32,9 +32,9 @@
  * min-height at once: an 852x393 phone in landscape must stay on the compact treatment, which is
  * what the base unprefixed styles are.
  */
-@custom-variant land (@media (aspect-ratio >= 1) and (width >= 900px) and (height >= 620px));
-@custom-variant port (@media (aspect-ratio < 1) and (width >= 700px) and (height >= 900px));
-@custom-variant roomy (@media ((width >= 1280px) and (height >= 940px)) or ((width >= 960px) and (height >= 1280px)));
+@custom-variant land (@media (aspect-ratio >=1) and (width >=900px) and (height >=620px));
+@custom-variant port (@media (aspect-ratio < 1) and (width >=700px) and (height >=900px));
+@custom-variant roomy (@media ((width >=1280px) and (height >=940px)) or ((width >=960px) and (height >=1280px)));
 
 /* --------------------------------------------------------------- recipe panel arrangements
  *
@@ -43,14 +43,20 @@
  * short-axis line says whether all four fit. Tall-and-roomy is the unprefixed base.
  */
 @custom-variant recipe-tight (@container recipe ((width < 600px) or (height < 600px)));
-@custom-variant recipe-wide-roomy (@container recipe ((aspect-ratio >= 1) and (height >= 600px)));
-@custom-variant recipe-wide-tight (@container recipe ((aspect-ratio >= 1) and (height < 600px)));
+@custom-variant recipe-wide-roomy (@container recipe ((aspect-ratio >=1) and (height >=600px)));
+@custom-variant recipe-wide-tight (@container recipe ((aspect-ratio >=1) and (height < 600px)));
 @custom-variant recipe-tall-tight (@container recipe ((aspect-ratio < 1) and (width < 600px)));
 
 @theme {
   /* ----------------------------------------------------------------------------- typefaces */
-  --font-sans: 'Archivo Subset', ui-sans-serif, system-ui, sans-serif;
-  --font-jp: 'Noto Sans JP Subset', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  --font-sans: 'Archivo Subset',
+  ui-sans-serif,
+  system-ui,
+  sans-serif;
+  --font-jp: 'Noto Sans JP Subset',
+  'Hiragino Sans',
+  'Yu Gothic',
+  sans-serif;
 
   /* --------------------------------------------------------------------------- ground truth */
   --color-field: #7b8f63;
@@ -186,13 +192,13 @@
 
   /* Compact landscape leaves the stage only ~143px at 852x393, so the frame is capped harder
    * there. Compact portrait is bound by the 76svw term and keeps the taller ceiling. */
-  @media (aspect-ratio >= 1) {
+  @media (aspect-ratio >=1) {
     :root {
       --frame-size: min(76svw, 34svh);
     }
   }
 
-  @media (aspect-ratio >= 1) and (width >= 900px) and (height >= 620px) {
+  @media (aspect-ratio >=1) and (width >=900px) and (height >=620px) {
     :root {
       --edge: 44px;
       --rail-w: 116px;
@@ -204,7 +210,7 @@
 
   /* --rail-item is 80px, not the geometry table's 92: one value serves both 834x1194 and
    * 768x1024, and nine slots of 88 come to 792px against a 768px viewport. */
-  @media (aspect-ratio < 1) and (width >= 700px) and (height >= 900px) {
+  @media (aspect-ratio < 1) and (width >=700px) and (height >=900px) {
     :root {
       --edge: 44px;
       --rail-w: 100%;
@@ -216,7 +222,7 @@
     }
   }
 
-  @media ((width >= 1280px) and (height >= 940px)) or ((width >= 960px) and (height >= 1280px)) {
+  @media ((width >=1280px) and (height >=940px)) or ((width >=960px) and (height >=1280px)) {
     :root {
       --type-display: 1;
       --type-micro: 1;
@@ -226,7 +232,7 @@
 
   /* Rail pitch is measured off each reference master separately — 73px vertical, 108px
    * horizontal — so the two roomy cases cannot share one value. */
-  @media (width >= 1280px) and (height >= 940px) {
+  @media (width >=1280px) and (height >=940px) {
     :root {
       --rail-w: 138px;
       --rail-item: 73px;
@@ -236,11 +242,29 @@
   /* Portrait master: rule at y=1233, glyph centres at y=1290, band 87 = 1px rule + 38px clear + a
    * 48px slot bottom-aligned in it. Guarded at 1024 rather than roomy's 960, because nine slots of
    * 108 come to 972px and a 960px viewport would clip the end pair. */
-  @media (width >= 1024px) and (height >= 1280px) {
+  @media (width >=1024px) and (height >=1280px) {
     :root {
       --rail-item: 108px;
       --rail-band: 87px;
       --rail-row: 48px;
+    }
+  }
+
+  /* Apply the grain on non-mobile screens only */
+  @media (width >=768px) {
+    .grain:before {
+      content: "";
+      background-color: transparent;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 600px;
+      opacity: 0.13;
+      top: 0;
+      left: 0;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
     }
   }
 
@@ -286,21 +310,6 @@
 
   button {
     cursor: pointer;
-  }
-
-  .grain:before {
-    content: "";
-    background-color: transparent;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 600px;
-    opacity: 0.13;
-    top: 0;
-    left: 0;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
   }
 }
 
