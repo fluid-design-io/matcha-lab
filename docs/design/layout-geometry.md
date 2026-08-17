@@ -1,8 +1,9 @@
 # Layout geometry
 
 Reference material for [DESIGN-TASTE.md](../../DESIGN-TASTE.md) Part 1. Every number here was
-measured off the four mockups in `.scratch/matcha-lab/assets/` at their native size, then
-expressed as a formula that holds at the other three target viewports.
+measured off the four reference mockups at their native size, then expressed as a formula that
+holds at the other three target viewports. The mockups are local working notes, not in this repo —
+these formulas are what survived them.
 
 Read this before positioning anything. Do not re-derive.
 

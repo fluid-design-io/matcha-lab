@@ -1,90 +1,80 @@
 # Matcha Lab
 
-Nine matcha drinks, one at a time, on a living field of muted matcha green. An art-directed
-single-viewport iPad web app: nothing scrolls, nothing stacks, and the only things that move are
-the things you touched.
+Nine matcha drinks, one at a time, on a flat field of matcha green.
 
-Built with TanStack Start in SPA mode, TanStack Router, Tailwind v4, Base UI, Motion, Gravity UI
-icons, and TypeGPU for the WebGPU field. Both typefaces are subset and self-hosted from
-`src/assets/fonts/`, so it launches from a cold cache with no network. It installs to the iPad home
-screen and runs standalone.
+An iPad web app built as one still screen. You swipe between the nine drinks and tap one to see
+how it is made — nothing scrolls, nothing stacks, and the only thing that moves is the thing you
+touched. It installs to the iPad home screen and opens from a cold cache with no network.
 
-## Getting started
+That is the whole app. There is no account, no saving, no list to manage.
+
+## Screenshots
+
+<!--
+  Put images in docs/media/ and swap them in below, e.g.
+  ![The field](docs/media/field.png)
+-->
+
+| The field | A recipe |
+| --- | --- |
+| _coming_ | _coming_ |
+
+## Video
+
+<!--
+  GitHub embeds an uploaded video inline: drag the .mp4 into any PR or issue comment, then paste
+  the URL it hands back here on its own line.
+-->
+
+_A short walkthrough will live here._
+
+## Running it
 
 ```bash
 bun install
-bun --bun run dev          # http://localhost:3000
 ```
 
-**WebGPU is required** for the animated field. It is on by default in current Safari and Chrome;
-without an adapter the field does not draw and the app shows the flat `#7B8F63` body colour behind
-it. There is no software fallback, deliberately.
+```bash
+bun --bun run dev
+```
+
+Then open <http://localhost:3000>. Designed for iPad — a narrow window is the closest thing on a
+desktop.
 
 ## Scripts
 
 | Script | Does |
 | --- | --- |
-| `bun --bun run dev` | Vite dev server on port 3000 |
+| `bun --bun run dev` | Dev server on port 3000 |
 | `bun run build` | Production build into `.output/` |
 | `bun run preview` | Serve the production build locally |
-| `bun run typecheck` | `tsc --noEmit` |
-| `bun test` | Unit tests (bun's runner) |
-| `bun run generate-routes` | Regenerate `routeTree.gen.ts` after adding a route file |
-| `bun run fonts` | Re-subset the two `.woff2` faces — run after adding any Japanese glyph to a string |
+| `bun run typecheck` | Type check |
+| `bun test` | Unit tests |
+| `bun run generate-routes` | Refresh the route tree after adding a route |
+| `bun run fonts` | Re-subset the fonts — run after adding any Japanese glyph |
 | `bun run renders` | Regenerate the nine drink renders |
+
+## Deploying
+
+The build is a plain static site: one directory, `.output/public/`, that any host will serve.
+
+```bash
+bun run build
+```
+
+Read **[docs/deploy.md](./docs/deploy.md)** before the first deploy. iOS only offers **Add to Home
+Screen** over `https`, so nothing about the home-screen experience is verified until the app is on
+a real origin.
 
 ## Read before changing anything
 
 | Document | For |
 | --- | --- |
 | [`AGENTS.md`](./AGENTS.md) | Where files go, comment and commit conventions |
-| [`DESIGN-TASTE.md`](./DESIGN-TASTE.md) | The design system. Every colour, size, timing and layout number is a token |
+| [`DESIGN-TASTE.md`](./DESIGN-TASTE.md) | The design system — every colour, size and timing is a token |
 | [`docs/design/layout-geometry.md`](./docs/design/layout-geometry.md) | Every measurement, viewport by viewport |
 | [`docs/design/image-generation.md`](./docs/design/image-generation.md) | The contract the nine drink renders were made under |
-| [`docs/deploy.md`](./docs/deploy.md) | Hosting, cache policy, and the on-device install checks |
+| [`docs/deploy.md`](./docs/deploy.md) | Hosting, caching, and the on-device install checks |
 
 If you are about to hard-code a colour, a type size or an edge margin, it already exists in
 `src/styles.css`.
-
-## Layout
-
-```
-src/
-  assets/           fonts/ and renders/ — imported, so Vite fingerprints them
-  components/       shared, multi-part UI
-  domain/           content and state, no React components
-  screens/lab/      the one route surface
-  prototypes/       the motion calibration instrument, behind its own route
-  routes/           thin TanStack Router wrappers
-  lib/              motion tokens and helpers
-  styles.css        the token system
-```
-
-## Routing
-
-File-based routing over `src/routes`. There are two routes and both are client components:
-
-- `/` — the lab
-- `/prototypes/motion` — the motion calibration prototype
-
-Adding a file to `src/routes` creates a route; `bun run generate-routes` refreshes the generated
-tree. There are **no server functions, no route loaders and no API routes**, and adding one would
-change what the build produces — see below.
-
-## Deploying
-
-The build is a **pure static site**. `spa.enabled` prerenders the HTML shell once at build time and
-`spa.prerender.outputPath: '/index'` emits it as `index.html`, so the deployable artefact is exactly
-one directory, `.output/public/`, and any static host serves it with no configuration. Nitro also
-emits `.output/server/` — it is dead weight here and is not uploaded.
-
-```bash
-bun run build
-bunx netlify-cli deploy --prod --dir .output/public --no-build
-```
-
-Host choice, the `_headers` cache policy and why it is the fragile part, the one-time account
-setup, and the on-device Add-to-Home-Screen verification are all in
-**[docs/deploy.md](./docs/deploy.md)**. Read it before the first deploy — iOS only offers
-**Add to Home Screen** over `https`, so every home-screen behaviour in this app is unverified
-until the app is on a real origin.

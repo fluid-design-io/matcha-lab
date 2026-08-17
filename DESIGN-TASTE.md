@@ -10,9 +10,9 @@ Long reference material lives beside it:
 - [Layout geometry](./docs/design/layout-geometry.md) — every measurement, viewport by viewport.
 - [Image generation contract](./docs/design/image-generation.md) — the prompt skeleton, the pipeline, the verification.
 
-Everything here is derived from the four reference mockups in `.scratch/matcha-lab/assets/`:
-`ref-1-portrait.png`, `ref-2-base-sheet.png`, `ref-3-recipe.png`, `ref-4-landscape.png`.
-When this file and a mockup disagree, this file wins — it is the one that got measured.
+Everything here is derived from four reference mockups — portrait, base sheet, recipe and
+landscape — which live in local working notes and are deliberately not kept in this repo.
+You do not need them: this file is the one that got measured, and it wins over any mockup.
 
 ---
 

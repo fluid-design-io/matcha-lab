@@ -1,9 +1,9 @@
 /**
  * The nine drinks. The single source of content truth.
  *
- * Recipes come from `.scratch/matcha-lab/research/drinks.md`; the kanji mapping is settled in
- * that effort's `map.md`. Nothing here is derived — see `drinks.utils.ts` for anything computed
- * across the collection.
+ * Recipes and the kanji mapping were settled in research notes kept outside this repo, so this
+ * file is their only surviving record — edit it as source, not as a copy. Nothing here is
+ * derived; see `drinks.utils.ts` for anything computed across the collection.
  *
  * **Provenance honesty.** Only 翠 SUI is genuinely traditional. Everything else is a modern café
  * invention, and the copy in this file may evoke but must not claim heritage. Each record carries

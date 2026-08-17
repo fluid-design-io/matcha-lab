@@ -6,6 +6,12 @@
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "matcha-lab-preview",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "preview"],
+      "port": 4173
     }
   ]
 }

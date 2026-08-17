@@ -66,8 +66,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      {/* Painted flat before anything renders, so there is no white flash while the GPU device
-          resolves. This is first paint, not a WebGPU fallback — there is no fallback path. */}
+      {/* Painted inline rather than left to the stylesheet, so the very first frame is the ground
+          colour and never a white flash. */}
       <body style={{ backgroundColor: FIELD }}>
         {children}
         <Scripts />

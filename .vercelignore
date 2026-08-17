@@ -5,8 +5,8 @@
 .vinxi
 node_modules
 
-# Agent/session scratch and the render pipeline's intermediates. `.scratch/` in particular
-# carries tracked PNG reference sheets that would otherwise be uploaded on every deploy.
+# Agent/session scratch and the render pipeline's intermediates. Gitignored, so a git-triggered
+# build never sees them; this entry is what keeps a CLI deploy from uploading the working copy.
 .scratch
 .render-work
 .agents

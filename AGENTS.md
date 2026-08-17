@@ -61,4 +61,4 @@ there — if you are about to hard-code one, it already exists.
 - `docs/design/image-generation.md` — the contract the nine drink renders were made under
 
 Consult the `motion` skill before writing any animation (import from `motion/react`, never
-`framer-motion`), and the `typegpu` skill before touching the field shader.
+`framer-motion`).

@@ -42,9 +42,8 @@ export function RecipeOverlay() {
 
             <Dialog.Popup
               className={cn(
-                // The third and last layer of the app: the field canvas is z-0, `LabShell` is
-                // z-10. Without a positive z the shell wins on tree order and hit-tests over the
-                // whole dialog.
+                // The top layer of the app, over `LabShell` at z-10. Without a positive z the
+                // shell wins on tree order and hit-tests over the whole dialog.
                 'fixed z-20',
                 // The frame lands on the main view's content margin and the paper sits inside it,
                 // so the overlay registers with the composition it covers. A compact viewport has

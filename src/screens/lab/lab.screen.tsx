@@ -1,5 +1,3 @@
-import { MatchaField } from '#/components/matcha-field'
-
 import { LabProvider } from './lab.context'
 import { LabFooter } from './lab.footer'
 import { LabMasthead } from './lab.masthead'
@@ -12,7 +10,6 @@ import { RecipeOverlay } from './recipe'
 export function LabScreen() {
   return (
     <LabProvider>
-      <MatchaField />
       <LabShell
         masthead={<LabMasthead />}
         stage={<LabStage />}

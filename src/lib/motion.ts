@@ -96,7 +96,7 @@ function layerDistance(
     : { drift: tokens.drift, blur: tokens.blur }
 }
 
-type DissolveVariants = {
+export type DissolveVariants = {
   initial: { opacity: number; y: number; filter: string }
   animate: { opacity: number; y: number; filter: string }
   exit: { opacity: number; y: number; filter: string }
@@ -152,7 +152,7 @@ function subscribeReducedMotion(onChange: () => void): () => void {
   return () => query.removeEventListener('change', onChange)
 }
 
-/** The live setting, for the non-React consumers — the field's frame loop is one. */
+/** The live setting, for non-React consumers and as `useMotionTokens`' snapshot source. */
 export function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false
   return window.matchMedia(REDUCED_QUERY).matches

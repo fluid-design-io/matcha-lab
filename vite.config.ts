@@ -4,7 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
-import typegpuPlugin from 'unplugin-typegpu/vite'
 
 const config = defineConfig({
   server: {
@@ -36,7 +35,6 @@ const config = defineConfig({
     }),
     viteReact(),
     babel({ presets: [reactCompilerPreset()] }),
-    typegpuPlugin(),
   ],
 })
 

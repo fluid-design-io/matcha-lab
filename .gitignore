@@ -23,3 +23,7 @@ todos.json
 
 # vercel CLI link state — written by `vercel link` on first setup
 .vercel
+.env*
+
+# working notes, research and issue drafts — local only
+.scratch

@@ -158,10 +158,9 @@ in the agent's in-app browser pane.
 
 ### 1. It loads over https
 
-Open the production URL in Safari on the iPad. The field should draw — the animated WebGPU
-canvas, not a flat green rectangle. If it is flat and the console shows no adapter, WebGPU is
-unavailable: it is on by default in current Safari, and on older iPadOS lives under
-**Settings → Safari → Advanced → Feature Flags → WebGPU**.
+Open the production URL in Safari on the iPad. Expect the flat `#7B8F63` ground with the drink,
+the masthead and the rail over it. The ground is a plain `background-color`, so there is nothing
+here that can fail to initialise — if the page is white, the stylesheet did not arrive.
 
 Check a deep link too: `https://<site>/prototypes/motion` typed directly into the address bar
 must render the motion prototype, not a 404. That is `_redirects` doing its job; a 404 here

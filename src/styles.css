@@ -250,8 +250,8 @@
   }
 
   body {
-    /* Flat, so there is no white flash before the GPU device resolves. This is first paint,
-     * not a WebGPU fallback — there is no fallback path. */
+    /* The ground, flat. Also set inline on <html> and <body> in __root.tsx so first paint is
+     * this colour rather than white, even before this stylesheet lands. */
     background-color: var(--color-field);
     color: var(--color-on-field);
     font-family: var(--font-sans);

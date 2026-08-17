@@ -20,7 +20,7 @@ export function LabShell({ masthead, stage, footer, rail, className }: LabShellP
     <div
       className={cn(
         // svh, not dvh, so content fits even mid-gesture while Safari's toolbars animate. z-10
-        // puts the shell above the field canvas at z-0.
+        // keeps the shell under the recipe overlay at z-20.
         'relative z-10 grid h-svh w-screen overflow-hidden',
         'grid-cols-1 grid-rows-[auto_1fr_auto_auto]',
         "[grid-template-areas:'masthead''stage''footer''rail']",

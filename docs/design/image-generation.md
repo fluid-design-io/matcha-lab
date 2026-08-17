@@ -8,8 +8,9 @@ drink, the exact CLI invocation, the post-processing, and the check that catches
 session, can produce image number ten and it matches. If you change anything here, you have
 invalidated the nine — regenerate all of them or change nothing.
 
-The verified target is `.scratch/matcha-lab/assets/imgen-reference.png` — a real `image_gen`
-output, measured below. When this file and your judgement disagree, open that file and look at it.
+The verified target is a real `image_gen` output, measured below. The image itself is a local
+working note and is not in this repo, so the measured table is the contract — when it and your
+judgement disagree, the table wins.
 
 ---
 
