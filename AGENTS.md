@@ -30,6 +30,16 @@ One stem per folder, one responsibility per suffix (`.screen.tsx`, `.data.ts`, `
 `.context.tsx`, `.utils.ts`, `.content.ts`). `index.ts` is the only public boundary; leaves stay
 internal unless they are intentionally public.
 
+## Commits and pull requests
+
+These rules apply to commit subjects and PR titles alike. A commit subject is held to exactly the same standard as the title of the PR that carries it.
+
+- Make sure the subject follows conventions from the repo. They should be simple and easy to understand conventional commit styles in projects that use them, i.e., "fix(api): no longer spike CPU".
+- Name the code that actually changed. No metaphors, no invented nicknames for a component, no cute phrasing. "fix(api): stack the hotel plaque's actions instead of rowing them" should have been "fix(api): align hotel actions vertically". If a reader can't map the subject back to a file or symbol, rewrite it.
+- Commit and PR bodies should aim for simplicity. Open with a minimum clear description of the problem. Follow up with how you solved it. Skip the body when the subject already says everything.
+
+
+
 ## Before touching UI
 
 Read `DESIGN-TASTE.md`. Every colour, type size, motion timing and layout number is a token
