@@ -10,23 +10,14 @@ That is the whole app. There is no account, no saving, no list to manage.
 
 ## Screenshots
 
-<!--
-  Put images in docs/media/ and swap them in below, e.g.
-  ![The field](docs/media/field.png)
--->
-
-| The field | A recipe |
+| Drink browser | Drink details |
 | --- | --- |
-| _coming_ | _coming_ |
+| ![Matcha Lab drink browser](./public/demo/demo-1.png) | ![Matcha Lab drink details](./public/demo/demo-2.png) |
+| ![Browsing another Matcha Lab drink](./public/demo/demo-3.png) | ![Matcha Lab shown on an iPad](./public/demo/demo-4.png) |
 
 ## Video
 
-<!--
-  GitHub embeds an uploaded video inline: drag the .mp4 into any PR or issue comment, then paste
-  the URL it hands back here on its own line.
--->
-
-_A short walkthrough will live here._
+[![Watch the Matcha Lab walkthrough on YouTube](https://img.youtube.com/vi/b5GbFR62vLA/maxresdefault.jpg)](https://youtu.be/b5GbFR62vLA)
 
 ## Running it
 
