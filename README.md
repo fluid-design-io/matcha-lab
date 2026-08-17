@@ -1,206 +1,87 @@
-Welcome to your new TanStack Start app!
+# Matcha Lab
 
-# Getting Started
+Nine matcha drinks, one at a time, on a living field of muted matcha green. An art-directed
+single-viewport iPad web app: nothing scrolls, nothing stacks, and the only things that move are
+the things you touched.
 
-To run this application:
+Built with TanStack Start in SPA mode, TanStack Router, TanStack Store, Tailwind v4, Base UI,
+Motion, and TypeGPU for the WebGPU field. It installs to the iPad home screen and runs standalone.
+
+## Getting started
 
 ```bash
 bun install
-bun --bun run dev
+bun --bun run dev          # http://localhost:3000
 ```
 
-# Building For Production
+**WebGPU is required** for the animated field. It is on by default in current Safari and Chrome;
+without an adapter the field does not draw and the app shows the flat `#7B8F63` body colour behind
+it. There is no software fallback, deliberately.
 
-To build this application for production:
+## Scripts
 
-```bash
-bun --bun run build
+| Script | Does |
+| --- | --- |
+| `bun --bun run dev` | Vite dev server on port 3000 |
+| `bun run build` | Production build into `.output/` |
+| `bun run preview` | Serve the production build locally |
+| `bun run typecheck` | `tsc --noEmit` |
+| `bun test` | Unit tests (bun's runner) |
+| `bun run generate-routes` | Regenerate `routeTree.gen.ts` after adding a route file |
+| `bun run fonts` | Re-subset the two `.woff2` faces — run after adding a kanji to any string |
+| `bun run renders` | Regenerate the nine drink renders |
+
+## Read before changing anything
+
+| Document | For |
+| --- | --- |
+| [`AGENTS.md`](./AGENTS.md) | Where files go, comment and commit conventions |
+| [`DESIGN-TASTE.md`](./DESIGN-TASTE.md) | The design system. Every colour, size, timing and layout number is a token |
+| [`docs/design/layout-geometry.md`](./docs/design/layout-geometry.md) | Every measurement, viewport by viewport |
+| [`docs/design/image-generation.md`](./docs/design/image-generation.md) | The contract the nine drink renders were made under |
+| [`docs/deploy.md`](./docs/deploy.md) | Hosting, cache policy, and the on-device install checks |
+
+If you are about to hard-code a colour, a type size or an edge margin, it already exists in
+`src/styles.css`.
+
+## Layout
+
 ```
-
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
-
-
-## Deploy with Nitro
-
-This project uses Nitro as a generic server adapter, so it can run on any Node-compatible host.
-
-```bash
-npm run build
-node dist/server/index.mjs
+src/
+  assets/           fonts/ and renders/ — imported, so Vite fingerprints them
+  components/       shared, multi-part UI
+  domain/           content and state, no React components
+  screens/lab/      the one route surface
+  routes/           thin TanStack Router wrappers
+  lib/              motion tokens and helpers
+  styles.css        the token system
 ```
-
-The build output is a self-contained Node server. To deploy, push the `dist/` directory to your host (Render, Fly.io, your own VPS, etc.) and run the server command above.
-
-For host-specific presets (Vercel, Netlify, Cloudflare, AWS Lambda, etc.) and tuning, see https://v3.nitro.build/deploy.
-
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
-
-```bash
-pnpm dlx shadcn@latest add button
-```
-
-
 
 ## Routing
 
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
+File-based routing over `src/routes`. There are two routes and both are client components:
 
-### Adding A Route
+- `/` — the lab
+- `/prototypes/motion` — the motion calibration prototype
 
-To add a new route to your application just add a new file in the `./src/routes` directory.
+Adding a file to `src/routes` creates a route; `bun run generate-routes` refreshes the generated
+tree. There are **no server functions, no route loaders and no API routes**, and adding one would
+change what the build produces — see below.
 
-TanStack will automatically generate the content of the route file for you.
+## Deploying
 
-Now that you have two routes you can use a `Link` component to navigate between them.
+The build is a **pure static site**. `spa.enabled` prerenders the HTML shell once at build time and
+`spa.prerender.outputPath: '/index'` emits it as `index.html`, so the deployable artefact is exactly
+one directory, `.output/public/`, and any static host serves it with no configuration. Nitro also
+emits `.output/server/` — it is dead weight here and is not uploaded.
 
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
+```bash
+bun run build
+bunx netlify-cli deploy --prod --dir .output/public --no-build
 ```
 
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+Host choice, the `_headers` cache policy and why it is the fragile part, the one-time account
+setup, and the on-device Add-to-Home-Screen verification are all in
+**[docs/deploy.md](./docs/deploy.md)**. Read it before the first deploy — iOS only offers
+**Add to Home Screen** over `https`, so every home-screen behaviour in this app is unverified
+until the app is on a real origin.

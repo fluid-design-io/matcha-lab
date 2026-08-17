@@ -1,20 +1,14 @@
 /*
- * Matcha Lab — the token system.
- *
- * Encodes Part 1 of DESIGN-TASTE.md. If you are about to hard-code a colour, a font size, or an
- * edge margin in a component, the value belongs here instead.
+ * Matcha Lab — the token system, encoding Part 1 of DESIGN-TASTE.md. A colour, font size or edge
+ * margin about to be hard-coded in a component belongs here instead.
  */
 @import 'tailwindcss';
 
 /* ---------------------------------------------------------------------------------- fonts */
 
 /*
- * Self-hosted and subset — see scripts/build-fonts.sh. A home-screen app must launch from a cold
- * cache with no network, so there is no Google Fonts round trip.
- *
- * font-display: block, not swap. These files are ~28 KB together and preloaded; swapping would
- * flash the system CJK face at 450px, which is far worse than 40 ms of nothing on a surface
- * already painting flat #7B8F63.
+ * Self-hosted and subset — see scripts/build-fonts.sh — so the app launches from a cold cache with
+ * no network. font-display is block, not swap: a swap would flash the system CJK face at 450px.
  */
 @font-face {
   font-family: 'Archivo Subset';
@@ -34,13 +28,9 @@
 
 /* ------------------------------------------------------------------------ aspect breakpoints
  *
- * Layout adapts by aspect ratio, not width. Tailwind's --breakpoint-* namespace can only generate
- * width queries, so the system is expressed as custom variants — the only v4 mechanism that can
- * guard on min-width AND min-height at once.
- *
- * The width/height guards are the whole point: an 852x393 phone in landscape satisfies
- * aspect-ratio >= 1 but fails height >= 620px, so it stays compact instead of getting the tall
- * treatment. Base (unprefixed) styles ARE the compact treatment.
+ * Custom variants rather than --breakpoint-*, because only they can guard on min-width AND
+ * min-height at once: an 852x393 phone in landscape must stay on the compact treatment, which is
+ * what the base unprefixed styles are.
  */
 @custom-variant land (@media (aspect-ratio >= 1) and (width >= 900px) and (height >= 620px));
 @custom-variant port (@media (aspect-ratio < 1) and (width >= 700px) and (height >= 900px));
@@ -74,19 +64,18 @@
   --color-on-paper-faint: color-mix(in oklab, var(--color-ink) 38%, transparent);
   --color-hairline: color-mix(in oklab, var(--color-ink) 20%, transparent);
 
-  /* The field seen through the recipe overlay — a darkened field, never a black wash.
-   * Measured #4D5B3E off ref-3-recipe.png. A neutral black scrim kills the green, and the
-   * green is the whole world. */
-  --color-scrim: color-mix(in oklab, #414f34 88%, transparent);
+  /* The field seen through the recipe overlay — a darkened field, never a black wash. Derived off
+   * --color-field-deep at L 0.41, not DESIGN-TASTE's 0.34, which composites to #394A20 against the
+   * #4D5B3E measured off ref-3-recipe.png. */
+  --color-scrim: oklch(from var(--color-field-deep) 0.41 c h / 0.86);
 
-  /* The watermark's size is not a --text-* token: it is orientation-dependent (44svh landscape,
-   * 28svw portrait) and lives as --watermark-size on :root below. One source, not two. */
+  /* The watermark's size is not a --text-* token: it is orientation-dependent and lives as
+   * --watermark-size on :root below. */
 
   /* ---------------------------------------------------------------------------- type scale
    *
-   * Two density multipliers, set on :root below. Display type gives up ~16% at the smaller
-   * viewports; micro-labels give up almost nothing, because 9px letterspaced caps stop being
-   * legible before they stop fitting. --text-micro does not scale at all. */
+   * Two density multipliers, set on :root below. --text-micro does not scale at all, because 9px
+   * letterspaced caps stop being legible before they stop fitting. */
   --text-title: calc(2.25rem * var(--type-display));
   --text-title--line-height: 1;
   --text-title--font-weight: 300;
@@ -151,21 +140,8 @@
   --text-micro--font-weight: 500;
   --text-micro--letter-spacing: 0.18em;
 
-  /* -------------------------------------------------------------------------------- motion
-   *
-   * Candidate B, "a whisper of travel", plus a slight defocus — ticket 09, picked by a human at
-   * 1366×1024. The springs themselves are not expressible in CSS and live in `src/lib/motion.ts`;
-   * these are the values CSS transitions have to match so a Tailwind `transition-*` and a Motion
-   * spring in the same composition agree. See DESIGN-TASTE.md § Motion. */
-  --motion-stagger: 40ms;
-  --motion-opacity-floor: 0;
-  --motion-drift: 4px;
-  --motion-blur: 2px;
-  --motion-watermark-drift: 9px;
-  --motion-watermark-blur: 4px;
-  /* The visual duration of the layer spring, for CSS-side transitions that have to keep pace. */
-  --motion-layer-duration: 380ms;
-  --ease-field: cubic-bezier(0.4, 0, 0.2, 1);
+  /* There are deliberately no motion tokens here. `src/lib/motion.ts` is the single source, and
+   * nothing in this app runs a CSS transition that has to keep pace with one of its springs. */
 }
 
 @layer base {
@@ -174,33 +150,37 @@
     --type-display: 0.84;
     --type-micro: 0.92;
 
-    /* Layout, per DESIGN-TASTE / docs/design/layout-geometry.md
-     *
-     * --rail-item is the rail's *pitch per slot*: the slot's height in landscape, its width in
-     * portrait. Selection changes the glyph inside the slot and never the pitch, so the rail
-     * cannot reflow when you tap it and the shared underline slides a constant distance.
-     *
-     * --rail-band and --rail-row are the portrait rail's cross-axis: the band is the whole rule-
-     * to-baseline block, the row is the slot inside it, bottom-aligned within the band. Landscape
-     * has no use for either — there the rail's cross axis is --rail-w.
-     *
-     * Nine slots at the measured pitch are *wider than the content column* in portrait, which is
-     * what the reference shows: the slot boxes bleed into the shell's edge padding, the glyph ink
-     * does not. Compact is the one case where nine fixed slots cannot fit a phone, so it falls
-     * back to whatever ninth of the viewport is going. */
+    /* Layout, per docs/design/layout-geometry.md. */
     --edge: 24px;
+
+    /* The minimum touch target. Not responsive: 44px is 44px on every screen. */
+    --tap: 44px;
+
     --rail-w: 100%;
-    --rail-item: min(52px, calc((100svw - 12px) / 9));
+
+    /* The rail's pitch per slot — selection never changes it, so the rail cannot reflow on tap and
+     * the shared underline slides a constant distance. Compact clamps to a ninth of the viewport,
+     * because nine --tap-wide slots do not fit a 393px phone. */
+    --rail-item: min(52px, calc(100svw / 9));
+
+    /* The portrait rail's cross axis: --rail-band is the whole rule-to-baseline block, --rail-row
+     * the glyph's slot bottom-aligned inside it. Landscape uses --rail-w instead. */
     --rail-band: 68px;
-    --rail-row: 44px;
+    --rail-row: var(--tap);
+
     --watermark-size: 34svw;
-    /* 34svh, not 40: compact is one stacked layout whichever way the phone is held, and at
-     * 852x393 the masthead, footer and rail leave the stage ~143px. 40svh overflowed it into the
-     * footer; 34 clears it. Portrait compact is nowhere near the limit either way. */
-    --frame-size: min(76svw, 34svh);
+    --frame-size: min(76svw, 40svh);
     --panel-pad: 28px;
 
     color-scheme: light only;
+  }
+
+  /* Compact landscape leaves the stage only ~143px at 852x393, so the frame is capped harder
+   * there. Compact portrait is bound by the 76svw term and keeps the taller ceiling. */
+  @media (aspect-ratio >= 1) {
+    :root {
+      --frame-size: min(76svw, 34svh);
+    }
   }
 
   @media (aspect-ratio >= 1) and (width >= 900px) and (height >= 620px) {
@@ -213,16 +193,15 @@
     }
   }
 
-  /* 80px, not the 92px in the geometry table or the 88px this file used to carry: one value has
-   * to serve both 834x1194 and 768x1024, and at 768 nine slots of 88 (792px) are wider than the
-   * viewport. Nine of 80 come to 720 and clear it with 24px a side. */
+  /* --rail-item is 80px, not the geometry table's 92: one value serves both 834x1194 and
+   * 768x1024, and nine slots of 88 come to 792px against a 768px viewport. */
   @media (aspect-ratio < 1) and (width >= 700px) and (height >= 900px) {
     :root {
       --edge: 44px;
       --rail-w: 100%;
       --rail-item: 80px;
       --rail-band: 77px;
-      --rail-row: 44px;
+      --rail-row: var(--tap);
       --watermark-size: 28svw;
       --frame-size: min(58svw, 44svh);
     }
@@ -246,9 +225,10 @@
     }
   }
 
-  /* Portrait master: rule at y=1233, glyph centres at y=1290, rail bottom 46px off the viewport —
-   * band 87 = 1px rule + 38px clear + a 48px slot, bottom-aligned. */
-  @media (width >= 960px) and (height >= 1280px) {
+  /* Portrait master: rule at y=1233, glyph centres at y=1290, band 87 = 1px rule + 38px clear + a
+   * 48px slot bottom-aligned in it. Guarded at 1024 rather than roomy's 960, because nine slots of
+   * 108 come to 972px and a 960px viewport would clip the end pair. */
+  @media (width >= 1024px) and (height >= 1280px) {
     :root {
       --rail-item: 108px;
       --rail-band: 87px;

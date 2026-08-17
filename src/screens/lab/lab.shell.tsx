@@ -11,23 +11,16 @@ type LabShellProps = {
 }
 
 /**
- * The one-viewport grid every other piece of the lab sits inside.
- *
- * Four slots, one DOM order, two arrangements. Landscape puts the rail in its own right-hand
- * column spanning the full height; portrait drops it to a fourth row along the bottom. Nothing
- * is swapped — the same four children reflow, which is what lets selection state and the shared
- * accent underline survive a rotation.
- *
- * Safe areas are handled here and only here, so no component further in has to know about the
- * home indicator or the camera housing.
+ * The one-viewport grid every other piece of the lab sits inside: four slots, one DOM order, two
+ * arrangements, with the same four children reflowing rather than being swapped. Safe areas are
+ * handled here and only here.
  */
 export function LabShell({ masthead, stage, footer, rail, className }: LabShellProps) {
   return (
     <div
       className={cn(
-        // svh, not dvh: it is the smallest viewport height, so content fits even mid-gesture
-        // while Safari's toolbars are animating. In standalone the two are identical.
-        // relative z-10 puts the shell above the field canvas, which sits at z-0.
+        // svh, not dvh, so content fits even mid-gesture while Safari's toolbars animate. z-10
+        // puts the shell above the field canvas at z-0.
         'relative z-10 grid h-svh w-screen overflow-hidden',
         'grid-cols-1 grid-rows-[auto_1fr_auto_auto]',
         "[grid-template-areas:'masthead''stage''footer''rail']",
@@ -47,11 +40,9 @@ export function LabShell({ masthead, stage, footer, rail, className }: LabShellP
           neither can push the footer down. */}
       <div className="relative min-h-0 [grid-area:stage]">{stage}</div>
       <div className="[grid-area:footer]">{footer}</div>
-      {/* Portrait needs air between the title block and the rule above the rail — 40px, which is
-          what puts the romaji on y=1104 and the rule on y=1233 at the master. The -10px is the
-          reference's own: the rail's last line sits 46px off the viewport bottom while the edge
-          margin is 56, so the band reaches ten pixels into the bottom padding. `overflow: hidden`
-          clips at the padding box, not the content box, so it stays visible. */}
+      {/* 40px of air puts the portrait romaji on y=1104 and the rule on y=1233 at the master. The
+          -10px is the reference's own: the rail's last line sits 46px off the viewport bottom
+          against a 56px edge margin, and `overflow: hidden` clips at the padding box. */}
       <div className="mt-4 [grid-area:rail] port:mt-10 port:-mb-2.5 land:mt-0">{rail}</div>
     </div>
   )

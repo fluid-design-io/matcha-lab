@@ -12,6 +12,9 @@ dist-ssr
 __unconfig*
 todos.json
 
+# host CLI state — `netlify link` writes .netlify/state.json on first setup
+.netlify
+
 # render pipeline scratch
 .render-work
 

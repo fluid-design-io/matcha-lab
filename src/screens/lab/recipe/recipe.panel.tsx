@@ -1,5 +1,3 @@
-import type { CSSProperties } from 'react'
-
 import type { Drink } from '#/domain/drinks'
 import { cn } from '#/lib/utils'
 
@@ -11,75 +9,93 @@ import { RecipeRender } from './recipe.render'
 import { RecipeTasting } from './recipe.tasting'
 
 /**
- * The rice paper and everything printed on it.
+ * The rice paper and everything printed on it. Requires its parent to be a size container named
+ * `recipe` carrying no padding of its own, because `cq` units resolve against the content box.
  *
- * Deliberately knows nothing about dialogs, portals or motion — it is a drink and a rectangle. Its
- * one requirement of whatever renders it is that the parent be a size container named `recipe`
- * with **no padding of its own**: `cqw` resolves against the container's content box, so padding
- * out there would silently shrink every `cq` number in here. `recipe.overlay.tsx` provides that;
- * so does the static harness the layout was checked in.
+ * Four arrangements, keyed on the panel's own box: the long axis says which way the groups run, the
+ * short axis says whether all four groups fit at all. 600px is the short-axis line — the smallest
+ * tablet panel measures 652 on it and the tallest phone one 317, and every panel measured between
+ * 504 and 564 overflowed the roomy arrangement.
  *
- * ## The rhythm
- *
- * Five variables, all `cqh`/`cqw` clamps. The centre of each clamp is the measurement off
- * `ref-3-recipe.png` at the 1366×1024 master, and the bounds stop portrait going loose and
- * 1024×768 going tight. This is the whole mechanism that keeps the panel free of a scrollbar: the
- * spacing compacts with the panel instead of holding still while the content grows.
- *
- * ## No nested scrolling
- *
- * Verified at 1366×1024, 1194×834, 1024×1366 and 1024×768, with the drinks that stress each axis —
- * 透 TŌ has five method steps, 深 SHIN has five build rows and the longest steps, 雲 KUMO has the
- * longest footer. If a content change ever breaks it, the fix is the content or these numbers,
- * never `overflow: auto`.
+ * Unprefixed is tall-and-roomy; the other three are mutually exclusive container queries, so only
+ * their order against the unprefixed utilities matters, and Tailwind always emits variants after
+ * those.
  */
 export function RecipePanel({ drink }: { drink: Drink }) {
   return (
     <div
-      className="absolute inset-0 flex flex-col overflow-hidden bg-paper p-(--panel-pad)"
-      style={
-        {
-          // The only shadow in the app, lifting the paper off the field.
-          boxShadow: '0 40px 120px -40px oklch(from var(--color-field-deep) 0.22 c h / 0.5)',
-          '--recipe-gap': 'clamp(24px, 4.3cqw, 56px)',
-          '--recipe-lead': 'clamp(20px, 3.4cqh, 32px)',
-          '--recipe-band': 'clamp(16px, 2.7cqh, 26px)',
-          '--recipe-step': 'clamp(10px, 1.9cqh, 18px)',
-          '--recipe-row': 'clamp(22px, 3.6cqh, 34px)',
-        } as CSSProperties
-      }
+      className={cn(
+        'absolute inset-0 flex flex-col overflow-hidden bg-paper',
+        // The one shadow in the app, lifting the paper off the field.
+        '[box-shadow:0_40px_120px_-40px_oklch(from_var(--color-field-deep)_0.22_c_h/0.5)]',
+        // Padding tracks the panel's *short* axis, so a panel short on one axis does not spend that
+        // axis on margin. A straight line through the two measurements: 56px where the short axis
+        // is the masters' 884px, 30px where it is the tightest tablet's 652px.
+        'p-(--recipe-pad) [--recipe-pad:clamp(16px,calc(11.2cqmin_-_43px),56px)]',
+        '[@container_recipe_((width<600px)_or_(height<600px))]:[--recipe-pad:16px]',
+        // The rhythm. Every value compacts with the panel instead of holding still while the
+        // content grows, which is what keeps the paper free of a scrollbar.
+        '[--recipe-gap:clamp(24px,4.3cqw,56px)]',
+        '[--recipe-lead:clamp(20px,3.4cqh,32px)]',
+        '[--recipe-band:clamp(16px,2.7cqh,26px)]',
+        '[--recipe-step:clamp(10px,1.9cqh,18px)]',
+        '[--recipe-row:clamp(22px,3.6cqh,34px)]',
+        // A panel short on one axis has no room to breathe, and these clamps would otherwise sit at
+        // their upper bound because the *other* axis is still long.
+        '[@container_recipe_((width<600px)_or_(height<600px))]:[--recipe-gap:24px]',
+        '[@container_recipe_((width<600px)_or_(height<600px))]:[--recipe-lead:14px]',
+        '[@container_recipe_((width<600px)_or_(height<600px))]:[--recipe-band:12px]',
+        '[@container_recipe_((width<600px)_or_(height<600px))]:[--recipe-step:8px]',
+        '[@container_recipe_((width<600px)_or_(height<600px))]:[--recipe-row:22px]',
+      )}
     >
       <RecipeHeader drink={drink} />
 
       <div
         className={cn(
           'mt-(--recipe-lead) grid min-h-0 flex-1 gap-x-(--recipe-gap) gap-y-(--recipe-lead)',
-          // Portrait: render and build share a row, method and tasting sit beneath.
-          'grid-cols-[minmax(0,1fr)_minmax(0,1fr)] grid-rows-[auto_1fr]',
-          "[grid-template-areas:'render_build'_'notes_notes']",
+          // Tall and roomy: render and build share a row, the notes group spans beneath them.
+          'grid-cols-[minmax(0,1fr)_minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)]',
           '[--recipe-render:min(45cqw,30cqh)]',
-          // Landscape: three columns, the render at the measured 398px.
-          '[@container_recipe_(aspect-ratio>=1)]:grid-cols-[var(--recipe-render)_minmax(0,1fr)_minmax(0,1fr)]',
-          '[@container_recipe_(aspect-ratio>=1)]:grid-rows-[minmax(0,1fr)]',
-          "[@container_recipe_(aspect-ratio>=1)]:[grid-template-areas:'render_build_notes']",
-          '[@container_recipe_(aspect-ratio>=1)]:[--recipe-render:min(36cqw,45cqh)]',
+          // Wide and roomy: three columns, the render at the measured 398px.
+          '[@container_recipe_(aspect-ratio>=1)_and_(height>=600px)]:grid-cols-[var(--recipe-render)_minmax(0,1fr)_minmax(0,1fr)]',
+          '[@container_recipe_(aspect-ratio>=1)_and_(height>=600px)]:grid-rows-[minmax(0,1fr)]',
+          '[@container_recipe_(aspect-ratio>=1)_and_(height>=600px)]:gap-y-0',
+          '[@container_recipe_(aspect-ratio>=1)_and_(height>=600px)]:[--recipe-render:min(36cqw,45cqh)]',
+          // Tight: no render, and the three groups that are left run along the panel's long axis as
+          // peers — build, method, the rule, tasting, in source order.
+          '[@container_recipe_(aspect-ratio<1)_and_(width<600px)]:grid-cols-[minmax(0,1fr)]',
+          '[@container_recipe_(aspect-ratio<1)_and_(width<600px)]:grid-rows-[auto_auto_1px_auto]',
+          '[@container_recipe_(aspect-ratio>=1)_and_(height<600px)]:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)_1px_minmax(0,0.8fr)]',
+          '[@container_recipe_(aspect-ratio>=1)_and_(height<600px)]:grid-rows-[minmax(0,1fr)]',
+          '[@container_recipe_(aspect-ratio>=1)_and_(height<600px)]:gap-y-0',
         )}
       >
-        <RecipeRender drink={drink} />
-        <RecipeBuild drink={drink} />
-
-        {/* METHOD and TASTING NOTE are one group that turns: stacked with a horizontal rule
-            between them in landscape, side by side with a vertical one in portrait. Same three
-            children and the same divider element — the rule stretches into whichever 1px track it
-            lands in, which is why portrait is a re-grouping rather than a squeeze. */}
+        {/* The one group a tight panel drops: it is the largest, and it is the only one that
+            repeats something the stage was showing a tap ago. */}
         <div
           className={cn(
-            '[grid-area:notes] grid min-w-0',
-            'grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] gap-x-(--recipe-gap)',
-            '[@container_recipe_(aspect-ratio>=1)]:grid-cols-[minmax(0,1fr)]',
-            '[@container_recipe_(aspect-ratio>=1)]:grid-rows-[auto_1px_minmax(0,1fr)]',
-            '[@container_recipe_(aspect-ratio>=1)]:gap-x-0',
-            '[@container_recipe_(aspect-ratio>=1)]:gap-y-(--recipe-lead)',
+            'w-(--recipe-render) max-w-full',
+            '[@container_recipe_((width<600px)_or_(height<600px))]:hidden',
+          )}
+        >
+          <RecipeRender drink={drink} />
+        </div>
+
+        <RecipeBuild drink={drink} />
+
+        {/* METHOD and TASTING NOTE are one group that turns: side by side where the panel is tall,
+            stacked where it is wide, and where it is tight the wrapper drops to `display: contents`
+            so the same three children become peers of the build column. */}
+        <div
+          className={cn(
+            'col-span-2 grid min-w-0 grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] gap-x-(--recipe-gap)',
+            '[@container_recipe_(aspect-ratio>=1)_and_(height>=600px)]:col-span-1',
+            '[@container_recipe_(aspect-ratio>=1)_and_(height>=600px)]:grid-cols-[minmax(0,1fr)]',
+            '[@container_recipe_(aspect-ratio>=1)_and_(height>=600px)]:grid-rows-[auto_1px_minmax(0,1fr)]',
+            '[@container_recipe_(aspect-ratio>=1)_and_(height>=600px)]:gap-x-0',
+            '[@container_recipe_(aspect-ratio>=1)_and_(height>=600px)]:gap-y-(--recipe-lead)',
+            '[@container_recipe_((width<600px)_or_(height<600px))]:contents',
           )}
         >
           <RecipeMethod drink={drink} />

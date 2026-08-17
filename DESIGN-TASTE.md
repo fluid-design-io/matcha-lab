@@ -26,7 +26,7 @@ purpose, and the only things that move are the things you touched.
 
 **Three rules that override any local cleverness:**
 
-1. **One viewport.** `min-height: 100dvh`, no vertical scroll on the main experience, no
+1. **One viewport.** `height: 100svh`, no vertical scroll on the main experience, no
    nested scroll containers anywhere. If content does not fit, the layout is wrong — fix the
    layout, do not add a scrollbar.
 2. **Motion is extremely subtle.** Noticeable only under attention. When two options are
@@ -72,6 +72,13 @@ never a raw alpha.
 | `--color-on-field-ghost` | 14% | The giant watermark kanji. Measured off the reference; do not raise it. |
 | `--color-hairline-field` | 22% | Rules and the dashed empty-state frame on the field. |
 
+**Considered and not added: `--color-frame-field` at 66%,** for the recipe overlay's hairline
+frame. The reference measures that frame at exactly paper-67%; `--color-on-field-muted` at 62% is
+the nearest existing role and is what ships. Over the scrim the two composite to `(177,179,160)`
+and `(184,185,167)` against a measured `(185,186,169)` — seven levels out of 255, on a 1px line.
+A seventh field role for one element, four points from an existing one, is the drift the restraint
+rule exists to stop. Revisit only if a second field-side frame ever appears.
+
 #### Roles on paper
 
 | Token | Ink at | Carries |
@@ -85,7 +92,20 @@ never a raw alpha.
 
 | Token | Value | Notes |
 | --- | --- | --- |
-| `--color-scrim` | `oklch(from var(--color-field-deep) 0.34 c h / 0.86)` | The field seen through the recipe overlay. Measured `#4D5B3E` in `ref-3-recipe.png` — a *darkened field*, not a black wash. Never `rgba(0,0,0,…)`; a neutral black scrim kills the green and the whole world with it. |
+| `--color-scrim` | `oklch(from var(--color-field-deep) 0.41 c h / 0.86)` | The field seen through the recipe overlay. A *darkened field*, not a black wash. Never `rgba(0,0,0,…)`; a neutral black scrim kills the green and the whole world with it. |
+
+`L 0.41` is the derived value, and it is a lightness match rather than an exact one. Over
+`--color-field` it composites to `#485A30` against the `#4D5B3E` measured off `ref-3-recipe.png` —
+lightness within `0.01` in OKLab, total `ΔE_ok ≈ 0.021`. (The `0.34` this doc previously specified
+composites to `#394920`, `ΔE_ok ≈ 0.072`, visibly too dark.)
+
+**The residual is chroma, not lightness, and it is a known and accepted trade.** `oklch(from …)`
+keeps `--color-field-deep`'s `c`, so the derived scrim carries chroma `0.068` where the reference
+measures `0.049`: the mockup's darkening desaturated as it dimmed, and a relative colour syntax
+that preserves `c` cannot. Deriving from the field token is worth more than the last 0.02 of
+chroma — one edit to `--color-field-deep` should move the scrim with it, and a hand-tuned literal
+would silently stop tracking. If the overlay ever reads too green, lower `c` here rather than
+reaching for a hex.
 
 #### Forbidden
 
@@ -114,21 +134,33 @@ resolves first and the Latin falls through.
 
 #### Scale
 
-Sizes are `rem` (root `16px`). The px column is what the mockup measures at the 1366×1024 master.
-The **compact** column applies at `1194×834` and `1024×768`, where the same composition has ~20%
-less room.
+Sizes are `rem` (root `16px`). The px column is what the mockup measures at the 1366×1024 master,
+and it is what ships at both `roomy` viewports.
+
+The **compact** column is not hand-set per row. Every size is `calc(<size> × var(--type-display))`
+or `calc(<size> × var(--type-micro))`, and those two multipliers are the whole density system:
+
+| Multiplier | roomy | everywhere else | Applies to |
+| --- | :---: | :---: | --- |
+| `--type-display` | `1` | `0.84` | Title, quantity, all kanji above 16px, method body |
+| `--type-micro` | `1` | `0.92` | Everything at or under 16px — labels, romaji, detail, numerals |
+
+Display type gives up ~16% at the four non-roomy tablet targets (`1194×834`, `1024×768`,
+`834×1194`, `768×1024`); micro-labels give up almost nothing, because 9px letterspaced caps stop
+being legible before they stop fitting. `--text-micro` does not scale at all. **If you change a
+compact number, change the multiplier — the column below is derived, not authored.**
 
 | Token | Role | Size | Compact | Weight | Tracking | Family |
 | --- | --- | --- | --- | --- | --- | --- |
-| `--watermark-size`¹ | Giant watermark kanji | `44svh` | `28svw` (portrait) | 200 | `0` | JP |
+| `--watermark-size`¹ | Giant watermark kanji | `44svh` land / `28svw` port | not density-scaled | 200 | `0` | JP |
 | `--text-title` | Drink name | `2.25rem` / 36px | 30px | 300 | `-0.01em` | Latin |
-| `--text-quantity` | Recipe build quantity | `1.875rem` / 30px | 26px | 300 | `-0.01em` | Latin |
+| `--text-quantity` | Recipe build quantity | `1.875rem` / 30px | 25px | 300 | `-0.01em` | Latin |
 | `--text-kanji-xl` | Recipe header kanji | `2.5rem` / 40px | 34px | 300 | `0` | JP |
-| `--text-kanji-lg` | Selected rail kanji | `2rem` / 32px | 28px | 300 | `0` | JP |
-| `--text-kanji-md` | Unselected rail kanji | `1.5rem` / 24px | 21px | 250 | `0` | JP |
+| `--text-kanji-lg` | Selected rail kanji | `2rem` / 32px | 27px | 300 | `0` | JP |
+| `--text-kanji-md` | Unselected rail kanji | `1.5rem` / 24px | 20px | 250 | `0` | JP |
 | `--text-kanji-sm` | Masthead 抹茶, `作り方`, `材料`, `手順`, `味` | `1rem` / 16px | 15px | 300 | `0.16em` | JP |
 | `--text-kanji-xs` | Axis glyphs 椰乳力涼濃, inline gloss kanji | `0.875rem` / 14px | 13px | 300 | `0` | JP |
-| `--text-body` | Method steps | `1.125rem` / 18px | 16px | 300 | `0` | Latin |
+| `--text-body` | Method steps | `1.125rem` / 18px | 15px | 300 | `0` | Latin |
 | `--text-name` | English name in the overlay header | `0.875rem` / 14px | 13px | 400 | `0` | Latin |
 | `--text-detail` | Ingredient line, kanji gloss, footer | `0.6875rem` / 11px | 10px | 400 | `0.06em` | Latin |
 | `--text-romaji` | `NAGI` beside a kanji | `0.6875rem` / 11px | 10px | 500 | `0.26em` | Latin |
@@ -136,10 +168,11 @@ less room.
 | `--text-micro` | Axis names, step numbers, rail romaji | `0.5625rem` / 9px | 9px | 500 | `0.18em` | Latin |
 | `--text-numeral` | Favourite count | `0.6875rem` / 11px | 10px | 400 | `0.18em` | Latin, `tnum` |
 
-¹ Not a `--text-*` token, because it is orientation-dependent rather than density-dependent. It
-lives on `:root` alongside the layout numbers. It also needs a **vertical nudge**: Noto Sans JP's
-ink sits about 9% of the font size *below* its em box's centre, so centring the box leaves the
-character low on the axis. `translateY(-52%)` rather than `-50%`.
+¹ Not a `--text-*` token, because it is orientation-dependent rather than density-dependent: `44svh`
+in landscape, `28svw` in portrait, `34svw` at compact, where one stacked composition serves the
+phone either way up. It lives on `:root` alongside the layout numbers, and it needs a **vertical
+nudge**: Noto Sans JP's ink sits about 9% of the font size *below* its em box's centre, so centring
+the box leaves the character low on the axis. `translateY(-52%)` rather than `-50%`.
 
 When checking any large kanji against a reference, measure the **ink**, not the element box —
 `canvas.measureText().actualBoundingBoxAscent/Descent` gives it exactly. At 450px the two differ
@@ -166,7 +199,7 @@ by 40px, which is more than enough to send you correcting in the wrong direction
 Full measurements live in **[Layout geometry](./docs/design/layout-geometry.md)**. The rules that
 constrain every component:
 
-- **One viewport, always.** `100dvh` on the shell, `overflow: hidden` on `body`. The main
+- **One viewport, always.** `height: 100svh` on the shell, `overflow: hidden` on `body`. The main
   experience has no scroll container. The recipe overlay has no scroll container.
 - **Safe areas are structural, not a patch.** Edge padding is
   `max(var(--edge), env(safe-area-inset-*))`, applied at the shell, so nothing inside a component
@@ -179,15 +212,17 @@ constrain every component:
   portrait.
 - **The render frame is always square**, sized off the short viewport axis by a single `min()`
   expression per orientation. It never becomes a rectangle, and it never sizes off content.
-- **`svh` / `svw`, not `vh` / `vw`.** iPadOS toolbars change `vh` mid-gesture.
+- **`svh` / `svw`, not `vh`, `dvh` or `vw`.** `svh` is the *smallest* viewport height, so the
+  composition still fits while Safari's toolbars are mid-animation; in standalone the two are
+  identical, which is the case that actually ships.
 
 Edge margins:
 
-| Viewport | Edge |
+| Viewport | `--edge` |
 | --- | --- |
 | 1366×1024, 1024×1366 (`roomy`) | 56px |
-| 1194×834, 1024×768 | 44px |
-| below that | 24px |
+| 1194×834, 1024×768, 834×1194, 768×1024 | 44px |
+| below that (compact) | 24px |
 
 ### 4. Motion
 
@@ -197,26 +232,35 @@ without 3D. Layer order, front to back:
 
 `title → romaji → ingredient line → render → rail → watermark`
 
-**Calibrated at 1366×1024 against four candidates responding to one trigger — ticket 09. The pick
-is candidate B, *a whisper of travel*, plus a slight defocus.** Four pixels of rise is enough to
-feel a direction and not enough to see one; two pixels of blur at the far end reads as the layer
-settling into focus rather than as an effect.
+**Calibrated at 1366×1024 against four candidates responding to one trigger, and picked by a human
+at the instrument — the prototype is still at `/prototypes/motion`. The pick is candidate B,
+*a whisper of travel*, plus a slight defocus.** Four pixels of rise is enough to feel a direction
+and not enough to see one; two pixels of blur at the far end reads as the layer settling into
+focus rather than as an effect.
 
-| Token | Value | Meaning |
+Every number lives in the `MOTION` object in `src/lib/motion.ts`, in the units Motion takes —
+seconds and pixels:
+
+| `MOTION` field | Value | Meaning |
 | --- | --- | --- |
-| `--motion-stagger` | `40ms` | Delay added per layer, in the order above. |
-| layer spring | `visualDuration 0.38s`, `bounce 0` | The spring every dissolving layer uses. |
-| `--motion-drift` | `4px` | Distance a layer travels. In from below, out upward. |
-| `--motion-blur` | `2px` | Defocus at the far end of the dissolve. |
-| watermark spring | `visualDuration 1s`, `bounce 0` | The watermark's own, slower spring. |
-| `--motion-watermark-drift` | `9px` | It travels further, because it is furthest away. |
-| `--motion-watermark-blur` | `4px` | And defocuses further, for the same reason. |
-| `--motion-opacity-floor` | `0` | A layer fades fully out. Its replacement is already fading in. |
+| `stagger` | `0.04` | Seconds of delay added per layer, in the order above. |
+| `layer` | `visualDuration 0.38`, `bounce 0` | The spring every dissolving layer uses. |
+| `drift` | `4` | Pixels a layer travels. In from below, out upward. |
+| `blur` | `2` | Pixels of defocus at the far end of the dissolve. |
+| `watermark` | `visualDuration 1`, `bounce 0` | The watermark's own, slower spring. |
+| `watermarkDrift` | `9` | It travels further, because it is furthest away. |
+| `watermarkBlur` | `4` | And defocuses further, for the same reason. |
 
-The springs cannot be expressed in CSS, so `src/lib/motion.ts` is the single source and the CSS
-custom properties above exist only so a Tailwind `transition-*` in the same composition can keep
-pace with a Motion spring. **Read tokens through `useMotionTokens()`** — never import `MOTION`
-directly into a component, or that component will ignore `prefers-reduced-motion`.
+A layer fades **fully** out — `opacity: 0`, no floor — because its replacement is already fading in.
+
+**`styles.css` deliberately carries no `--motion-*` custom properties.** It carried eight and
+nothing read them. Springs cannot be expressed in CSS, so every animation in this app is a Motion
+spring driven from the object above, and a parallel set of CSS numbers is a second source with no
+consumer — it can only drift. If a Tailwind `transition-*` ever genuinely has to keep pace with one
+of these springs, add the token to `@theme` at that point, next to the code that reads it.
+
+**Read tokens through `useMotionTokens()`** — never import `MOTION` directly into a component, or
+that component will ignore `prefers-reduced-motion`.
 
 Settled with the numbers:
 
@@ -267,7 +311,7 @@ The app needs four icons. That is the whole list:
 | Use | Icon | Box | Effective stroke | Pairing |
 | --- | --- | --- | --- | --- |
 | Favourite count, header | `Heart` | 12px | 1.13px | Beside `--text-numeral`. Matches the hairline weight. |
-| Saved state, recipe overlay | `HeartFill` | 12px | — | Beside `--text-label` `SAVED`, in `--color-accent`. |
+| Favourite toggle, recipe overlay | `Heart` ×2 + `HeartFill` | 12px | — | Three glyphs stacked in one box — resting outline, accent outline, accent fill — so the state change is `opacity` only. Beside `--text-label` `SAVE` / `SAVED`. |
 | Close the recipe overlay | `Xmark` | 16px | 1.5px | Standalone. 44px hit area, invisible. |
 | Empty / loading render frame | `Picture` | 20px | 1.88px | Above an 11px caption, inside the dashed frame. |
 
@@ -294,9 +338,14 @@ What each may and may not do. Anything not listed is not allowed to appear.
 
 #### The masthead
 
-抹茶 at `--text-kanji-sm`, then `MATCHA COCONUT LAB` at `--text-label`. A 1px accent hairline
-drops from the very top edge of the viewport down past the kanji, sitting exactly on the left
-content margin — a printer's registration tick, and the only vertical rule in the app.
+抹茶 at `--text-kanji-sm`, then `MATCHA COCONUT LAB` at `--text-label` — on one line in landscape,
+stacked in portrait, per the references.
+
+**In landscape only,** a 1px accent hairline drops from the very top edge of the viewport down past
+the kanji, sitting exactly on the left content margin — a printer's registration tick, and the only
+vertical rule in the app. It escapes the shell's top padding with a negative offset to reach the
+edge. Portrait has no tick: `ref-1-portrait.png` does not draw one, and a vertical rule above a
+stacked masthead reads as a margin marker rather than as registration.
 
 May not: gain a logo, a nav, a tagline, or a second line.
 
@@ -306,12 +355,24 @@ Nine kanji, one component that **reflows** — vertical on the right edge in lan
 along the bottom in portrait. Same nine children, same selection state, same underline. Only flow
 direction and label placement change. Never two components swapped.
 
-- Selected: `--text-kanji-lg`, `--color-on-field-strong`, romaji beside it (rotated in landscape
-  via `writing-mode: vertical-rl`, beneath it in portrait).
-- Unselected: `--text-kanji-md`, `--color-on-field-faint`, no romaji.
+- Selected: `--text-kanji-lg`, `--color-on-field-strong`, romaji at `--text-micro` in
+  `--color-on-field-muted`.
+- Unselected: `--text-kanji-md`, `--color-on-field-faint`.
+- **Romaji is orientation-dependent, and that is the rule, not an inconsistency.** Portrait labels
+  *every* glyph, beneath it, unselected ones dropping to `--color-on-field-faint`. Landscape labels
+  *only the selected* glyph, rotated via `writing-mode: vertical-rl`. Both references say so —
+  `ref-1-portrait.png` runs SUI through SHIN along the bottom, `ref-4-landscape.png` carries NAGI
+  and nothing else. The horizontal rail has the width to name the whole collection; the vertical
+  one does not, and nine rotated words down the right edge would read as a second column of type
+  arguing with the watermark.
 - Selection is marked by a short accent rule — to the left of the kanji in landscape, beneath the
   romaji in portrait — and it is **one shared layout element** that slides.
-- Hit targets are at least 44×44px regardless of how small the glyph is.
+- **The whole slot is the hit target, and in portrait the slot fills the ruled band** — no part of
+  the ruled area is dead to a finger, even though the glyph and its label sit in a shorter box
+  pinned to the band's bottom edge. That clears 44×44px at every tablet target: 116×60 or 138×73
+  in landscape, 80×77 or 108×87 in portrait. On a phone it cannot — nine 44px-wide slots need
+  396px and the narrowest phone is 393 — so compact clamps the pitch to a ninth of the viewport
+  and the slot goes narrow rather than the rail wrapping.
 
 May not: scroll, wrap, reorder, show more than nine, or animate the nine glyphs independently.
 
@@ -343,11 +404,17 @@ May not: become a filled button, gain a border, or move away from the bottom-rig
 
 #### The recipe overlay
 
-A centred rice-paper panel over a scrim of the darkened field, with a 1px `--color-hairline`
-frame inset 14px from the panel edge. Built on Base UI's dialog primitive — focus trap, escape,
-scroll lock and ARIA come free, and hand-rolling them is a mistake.
+A centred rice-paper panel over a scrim of the darkened field, with a 1px frame 14px **outside**
+the paper — drawn on the scrim, landing exactly on the main view's content margin. Built on Base
+UI's dialog primitive — focus trap, escape, scroll lock and ARIA come free, and hand-rolling them
+is a mistake.
 
+- **The frame is on the field side, so it takes a field-side ink role: `--color-on-field-muted`,
+  never `--color-hairline`.** Ink at 20% over a scrim is invisible. The reference measures the
+  frame as paper at ~67% — see
+  [Layout geometry](./docs/design/layout-geometry.md#recipe-overlay--ref-3-recipepng).
 - One shadow in the whole app: `0 40px 120px -40px oklch(from var(--color-field-deep) 0.22 c h / 0.5)`.
+- The frame belongs to the panel, not the backdrop, so the two arrive as one object.
 - Container queries drive its internals. Its children respond to the panel, not the viewport.
 - No nested scrolling, at any target viewport, ever.
 

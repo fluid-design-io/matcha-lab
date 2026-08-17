@@ -1,12 +1,6 @@
 /**
- * Motion tokens for the drink-change transition.
- *
- * The shape is settled: a **staggered dissolve**. Every layer cross-fades on a spring, each one
- * lagging the one before it, with the giant watermark kanji moving last and slowest — depth
- * without 3D.
- *
- * The numbers are ticket 09's, chosen by a human at 1366×1024 from four candidates side by side.
- * The prototype that produced them is at `/prototypes/motion`.
+ * The single source for the drink-change transition: a staggered dissolve where every layer
+ * cross-fades on a spring lagging the one before it, the watermark last and slowest.
  */
 
 import { useSyncExternalStore } from 'react'
@@ -36,8 +30,8 @@ export type MotionTokens = {
 }
 
 /**
- * Front to back. Each layer's delay is its index times `stagger`, which is what produces the
- * sense of depth: the things nearest the reader move first, the atmosphere moves last.
+ * Front to back. Each layer's delay is its index times `stagger`, which is what produces the sense
+ * of depth: the things nearest the reader move first, the atmosphere moves last.
  */
 export const MOTION_LAYERS = [
   'title',
@@ -50,19 +44,14 @@ export const MOTION_LAYERS = [
 
 export type MotionLayer = (typeof MOTION_LAYERS)[number]
 
-export function layerDelay(layer: MotionLayer, tokens: MotionTokens = MOTION): number {
+/** Tokens are required, not defaulted, so no caller can bypass `useMotionTokens()` by accident. */
+export function layerDelay(layer: MotionLayer, tokens: MotionTokens): number {
   return MOTION_LAYERS.indexOf(layer) * tokens.stagger
 }
 
 /**
- * **Candidate B, "a whisper of travel", plus a slight defocus.** Picked by the human at
- * 1366×1024 with all four candidates responding to one trigger — ticket 09.
- *
- * Four pixels of rise is enough to feel a direction and not enough to see one. The blur was
- * added on top of B by the same call: two pixels at the far end of the dissolve, which reads as
- * the layer settling into focus rather than as an effect. It is not in the prototype's original
- * four because it was asked for after they were judged; the candidates carry it now so the
- * instrument still matches what shipped.
+ * Calibrated by a human at 1366×1024 against four candidates: a whisper of travel plus a slight
+ * defocus. Four pixels of rise is enough to feel a direction and not enough to see one.
  */
 export const MOTION: MotionTokens = {
   stagger: 0.04,
@@ -75,10 +64,9 @@ export const MOTION: MotionTokens = {
 }
 
 /**
- * What `prefers-reduced-motion` collapses the transition to.
- *
- * Not "no feedback" — every state change still reads, it just stops travelling. One short
- * cross-fade, no stagger, no movement, no defocus.
+ * What `prefers-reduced-motion` collapses the transition to: one short cross-fade, no stagger, no
+ * movement, no defocus. Not "no feedback" — every state change still reads, it just stops
+ * travelling.
  */
 export const MOTION_REDUCED: MotionTokens = {
   stagger: 0,
@@ -90,22 +78,13 @@ export const MOTION_REDUCED: MotionTokens = {
   watermarkBlur: 0,
 }
 
-/**
- * A single step along the rail and a jump of several get the **same** transition.
- *
- * Settled while watching the prototype: scaling the stagger by distance makes a jump from 01 to
- * 09 feel like a different, heavier interaction than a jump from 01 to 02, and the collection is
- * nine peers rather than a timeline. One response to one change.
- */
-export const MOTION_DISTANCE_SCALES = false
-
 /** The spring a given layer dissolves on. Only the watermark has its own. */
-export function layerSpring(layer: MotionLayer, tokens: MotionTokens): SpringToken {
+function layerSpring(layer: MotionLayer, tokens: MotionTokens): SpringToken {
   return layer === 'watermark' ? tokens.watermark : tokens.layer
 }
 
 /** How far a given layer travels and defocuses. Only the watermark has its own. */
-export function layerDistance(
+function layerDistance(
   layer: MotionLayer,
   tokens: MotionTokens,
 ): { drift: number; blur: number } {
@@ -128,13 +107,8 @@ export type DissolveVariants = {
 
 /**
  * The whole transition for one layer, as props for a `motion` element inside `AnimatePresence`.
- *
- * The incoming layer rises from below and the outgoing one leaves upward, so the two never
- * travel in the same direction — that is what makes 4px legible as a direction at all.
- *
- * `filter` is animated rather than a wrapper's `backdrop-filter`: `opacity`, `transform` and
- * `filter` are the three properties this design is allowed to animate, and all three composite
- * without touching layout.
+ * The incoming layer rises from below and the outgoing one leaves upward, which is what makes 4px
+ * legible as a direction at all.
  */
 export function dissolve(layer: MotionLayer, tokens: MotionTokens): DissolveVariants {
   const spring = layerSpring(layer, tokens)
@@ -155,9 +129,8 @@ export function dissolve(layer: MotionLayer, tokens: MotionTokens): DissolveVari
 }
 
 /**
- * The overlay's own open/close, which is not a dissolve — one panel arriving, not six layers
- * trading places. It borrows the layer spring so it sits in the same family, and it gets no
- * stagger and no defocus: a panel that arrives out of focus reads as a lightbox.
+ * The overlay's own open/close — one panel arriving, not six layers trading places. It borrows the
+ * layer spring to stay in the family, with no stagger and no defocus.
  */
 export function panelTransition(tokens: MotionTokens) {
   return {
@@ -176,25 +149,21 @@ function subscribeReducedMotion(onChange: () => void): () => void {
   return () => query.removeEventListener('change', onChange)
 }
 
-function readReducedMotion(): boolean {
+/** The live setting, for the non-React consumers — the field's frame loop is one. */
+export function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false
   return window.matchMedia(REDUCED_QUERY).matches
 }
 
 /**
- * The tokens in force right now.
- *
- * A hook rather than a module constant because `prefers-reduced-motion` can change while the app
- * is open — iPadOS flips it from Control Centre without reloading the page — and a home-screen
- * app is never reloaded.
- *
- * `useSyncExternalStore` with a server snapshot of `false`: the SSR shell is a still frame, so
- * full motion is the correct thing to hydrate against either way.
+ * The tokens in force right now, as a hook because the setting can change while the app is open —
+ * iPadOS flips it from Control Centre, and a home-screen app is never reloaded. The server
+ * snapshot is `false`, since the SSR shell is a still frame either way.
  */
 export function useMotionTokens(): MotionTokens {
   const reduced = useSyncExternalStore(
     subscribeReducedMotion,
-    readReducedMotion,
+    prefersReducedMotion,
     () => false,
   )
   return reduced ? MOTION_REDUCED : MOTION

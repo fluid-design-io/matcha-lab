@@ -2,12 +2,9 @@ import { useLab } from './lab.context'
 import { LabLayer } from './lab.layer'
 
 /**
- * The title block and the recipe affordance — the bottom band of the composition.
- *
- * Landscape sets them side by side with the affordance right-aligned; portrait keeps the same
- * arrangement but drops the kanji gloss from the title row, because that row has to share its
- * width with the affordance and the gloss is the least load-bearing thing in it. The gloss
- * survives in the recipe overlay's footer, which is where the portrait reference puts it too.
+ * The title block and the recipe affordance — the bottom band of the composition. Portrait drops
+ * the kanji gloss from the title row, which has to share its width with the affordance there; it
+ * survives in the recipe overlay's footer.
  */
 export function LabFooter() {
   return (
@@ -20,22 +17,17 @@ export function LabFooter() {
 
 /**
  * Three of the six dissolving layers, and the first three to move: romaji, then title, then the
- * ingredient line. The stagger runs front to back, and this is the front.
- *
- * The vertical rhythm moved off the type and onto the layers, because the layer is now the flex
- * child — same 14px and 12px, one level out.
+ * ingredient line. The vertical rhythm sits on the layers rather than the type, because the layer
+ * is the flex child.
  */
 function LabTitle() {
   const { drink } = useLab()
 
   return (
     <div className="flex min-w-0 flex-col">
-      {/*
-        The document's only h1, and the one thing assistive tech reads when the drink changes.
-        The three visible layers below are hidden from it: `AnimatePresence` keeps the outgoing
-        drink in the DOM for the length of the dissolve, and two titles at once is worse than a
-        title that lives somewhere slightly unexpected.
-      */}
+      {/* The document's only h1, and the one thing assistive tech reads when the drink changes.
+          The three visible layers below are hidden from it, because `AnimatePresence` keeps the
+          outgoing drink in the DOM for the length of the dissolve. */}
       <h1 aria-live="polite" className="sr-only">
         {drink.romaji} — {drink.name}. {drink.ingredientLine}. {drink.gloss}.
       </h1>
@@ -79,11 +71,12 @@ function LabRecipeAffordance() {
       aria-label={`Recipe for ${drink.name}`}
       className="group flex shrink-0 flex-col items-end gap-1 land:mb-4 land:flex-row land:items-center land:gap-4"
     >
-      {/* The accent rule is the affordance's only ornament, and landscape is the only place there
-          is room for it. */}
+      {/* The affordance's only ornament, and landscape is the only place there is room for it. It
+          grows on hover by scaling a fixed 96px box from its right edge — animating `width` would
+          put a layout pass in every frame of it. */}
       <span
         aria-hidden
-        className="hidden h-px w-21 bg-accent transition-[width] duration-300 ease-out group-hover:w-24 land:block"
+        className="hidden h-px w-24 origin-right scale-x-[0.875] bg-accent transition-transform duration-300 ease-out group-hover:scale-x-100 land:block"
       />
       <span className="font-jp text-kanji-sm text-on-field-strong untrack">作り方</span>
       <span className="text-label text-on-field-muted untrack uppercase">Recipe →</span>

@@ -6,12 +6,8 @@ import { RecipeFavourite } from './recipe.favourite'
  * The metadata band: what the kanji means, how it is served, what the shared base is, and the one
  * control in the panel that changes anything.
  *
- * The gloss lives here rather than in the main view's title block in portrait, where that row has
- * to share its width with the recipe affordance — this footer is where it survives a rotation.
- *
- * `SERVE_LABEL` is set as a `--text-label` word rather than an icon: `Snowflake` and `Flame` are
- * ruled out by the design contract, and 雲 KUMO's *hot on frozen* has no icon anyway. It is the one
- * hard fact in a row of soft ones, so it sits a step stronger than the gloss around it.
+ * This is the only place the gloss survives a rotation — the main view's title block drops it in
+ * portrait.
  */
 export function RecipeFooter({ drink }: { drink: Drink }) {
   return (

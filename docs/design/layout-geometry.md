@@ -30,6 +30,11 @@ The `width`/`height` guards are the whole point: a 852×393 phone in landscape h
 `aspect-ratio >= 1` but fails `height >= 620px`, so it stays compact instead of getting the tall
 treatment.
 
+Two `:root` blocks in `styles.css` use raw media queries rather than these variants, and both are
+deliberate: the rail's roomy overrides split `roomy` back into its landscape and portrait halves
+(and the portrait half guards at 1024px, not 960 — see [Grid](#grid)), and `--frame-size` splits
+compact on a bare `aspect-ratio >= 1`.
+
 | Viewport | `land` | `port` | `roomy` | Result |
 | --- | :---: | :---: | :---: | --- |
 | 1366×1024 | ✅ | — | ✅ | Landscape master |
@@ -57,8 +62,11 @@ padding-inline: max(var(--edge), env(safe-area-inset-left)) max(var(--edge), env
 padding-block:  max(var(--edge), env(safe-area-inset-top))  max(var(--edge), env(safe-area-inset-bottom));
 ```
 
-Nothing inside a component knows about `env()`. The shell is `100dvh`, `overflow: hidden`, and
-`overscroll-behavior: none` so a rubber-band drag on iPadOS cannot reveal anything behind it.
+Nothing inside a component knows about `env()`. The shell is `height: 100svh` with
+`overflow: hidden`, and `body` carries `overscroll-behavior: none` so a rubber-band drag on
+iPadOS cannot reveal anything behind it. `svh`, not `dvh`: it is the smallest viewport height, so
+the composition fits even mid-gesture while the toolbars animate, and in standalone the two are
+identical anyway.
 
 ### Grid
 
@@ -83,14 +91,67 @@ grid-template-rows:    auto 1fr auto auto; /* masthead / stage / footer / rail *
 
 Same children, same order in the DOM. Only `grid-template-*` and the rail's flow direction change.
 
-| Token | compact | `land` | `port` | `roomy` |
-| --- | --- | --- | --- | --- |
-| `--rail-w` | — | `138px` | `100%` | `138px` (land) |
-| `--rail-item` | `52px` | `60px` | `92px` | `73px` (land) / `108px` (port) |
+`roomy` is not one block in `styles.css` — the density block (type scale, `--edge`, `--panel-pad`)
+covers both orientations, and then two shape-specific blocks carry the rail numbers, because the
+rail pitch was measured off each master separately and the two cannot share a value. The table
+follows that structure.
 
-`--rail-item` is a **fixed pitch per slot** — the glyph is centred inside it. Selection changes the
+| Token | compact | `land` | `port` | roomy `land` | roomy `port` |
+| --- | --- | --- | --- | --- | --- |
+| `--rail-w` | `100%` | `116px` | `100%` | `138px` | `100%` |
+| `--rail-item` | `min(52px, 100svw / 9)` | `60px` | `80px` | `73px` | `108px` |
+| `--rail-band` | `68px` | — | `77px` | — | `87px` |
+| `--rail-row` | `var(--tap)` | — | `var(--tap)` | — | `48px` |
+
+`—` means the token has no effect in that variant, not that it is unset. Landscape uses neither
+`--rail-band` nor `--rail-row`: there the rail is `height: 100%` inside its own grid column and the
+slot's cross axis is `--rail-w`.
+
+`--tap: 44px` is global and never responsive — the minimum touch target is 44px on every screen.
+It sizes `--rail-row` everywhere except the portrait master, where the measured 48px row is already
+larger. The hit target is bigger than either: the slot fills the whole `--rail-band`.
+
+**The roomy `port` rail block guards at `width >= 1024px`, not at `roomy`'s own 960px.** Those two
+conditions are deliberately not the same query: nine slots of the master's 108px pitch come to
+972px, so a 960px-wide viewport would clip the outermost pair. Between 960 and 1024 wide the
+density is roomy — full type scale, 56px edge — while the rail stays on `port`'s 80px pitch. If
+you widen one guard, widen the other or check the arithmetic again.
+
+**`--rail-item` is a fixed pitch per slot** — the glyph is centred inside it. Selection changes the
 glyph size but never the pitch, so the rail cannot reflow when you tap it and the shared underline
 slides a constant distance every time. This is the single most important number in the rail.
+
+**`--rail-band` and `--rail-row` are the portrait rail's cross axis, and they are not the same
+box.** The band is the whole rule-to-baseline block, with a `border-top` hairline at its top edge.
+Each slot **stretches to fill the band**, so no part of the ruled area is dead to a finger. Inside
+the slot, a `--rail-row` box pinned to its bottom edge carries the glyph and the romaji, and that
+is what holds their optical position. At the portrait master the band is
+`87px = 1px rule + 38px clear + a 48px row`, which puts the rule on `y=1233` and the glyph centres
+on `y≈1290`.
+
+**What binds each rail number:**
+
+- `--rail-w` at `land` is the measured roomy column scaled by the compact type multiplier:
+  `138 × 0.84 = 116`. The column has to hold the glyph, the rotated romaji and the selection tick
+  at whatever size the type scale is running.
+- `--rail-item` in portrait is bound by **768×1024**, not by proportion. One value serves both
+  non-roomy portrait targets, and at 768 nine slots of the proportional 88px come to 792px —
+  wider than the viewport. Nine of 80px come to 720px and clear it with 24px a side. (`92px`
+  appeared in an earlier version of this table; it is derivable from neither master and nine of
+  them overflow 768 by 60px.)
+
+### The stage's two sizes
+
+| Token | compact ▭ | compact ▯ | `land` | `port` |
+| --- | --- | --- | --- | --- |
+| `--frame-size` | `min(76svw, 34svh)` | `min(76svw, 40svh)` | `min(48svh, 38svw)` | `min(58svw, 44svh)` |
+| `--watermark-size` | `34svw` | `34svw` | `44svh` | `28svw` |
+
+Compact is one stacked composition whichever way the phone is held, so it splits the frame on a
+bare `aspect-ratio >= 1` rather than on `land`. Held sideways at 852×393 the masthead, footer and
+rail leave the stage about 143px and `40svh` overflows into the footer, so landscape-shaped
+compact caps at `34svh`. Held upright the `76svw` term binds long before the height term does, and
+the taller ceiling costs nothing.
 
 ## Landscape — 1366×1024 (master, `ref-4-landscape.png`)
 
@@ -108,10 +169,11 @@ slides a constant distance every time. This is the single most important number 
 | Ingredient + gloss | ink `y 958→967` | 11px, `--color-on-field-faint` |
 | Title block bottom | 57px from viewport bottom | `--edge` |
 | Recipe affordance | rule `x 965→1048` at `y=947`; `作り方` `x 1035→1090`; `RECIPE →` `x 1104→1172` | Footer, column 1, right-aligned; `margin-bottom: 16px` |
-| Rail kanji centre | `x=1259` | `--rail-w` column, glyph centred at 45% of it |
+| Rail column | `x 1172→1310` | `--rail-w: 138px`, flush to the content margin |
+| Rail kanji centre | `x=1259` | `left: 63%` of `--rail-w` → `1172 + 86.9` |
 | Rail item pitch | 73px, span `y 217→802`, centred on 512 | `--rail-item` |
-| Rail selection tick | `x 1216→1229` (13px), left of the glyph | `--color-accent`, 1px tall |
-| Rail romaji | `x≈1292`, rotated | `writing-mode: vertical-rl` |
+| Rail selection tick | `x 1216→1229` (13px), left of the glyph | `left: 32%`, `width: 10%`; `--color-accent`, 1px tall |
+| Rail romaji | `x≈1292`, rotated, selected slot only | `left: 82%`, `writing-mode: vertical-rl` |
 
 Derived sizes at the other landscape viewports:
 
@@ -120,8 +182,9 @@ Derived sizes at the other landscape viewports:
 | `--edge` | 56 | 44 | 44 |
 | Render frame `min(48svh, 38svw)` | 492 | 400 | 369 |
 | Watermark `44svh` | 450 | 367 | 338 |
+| `--rail-w` | 138 | 116 | 116 |
 | `--rail-item` | 73 | 60 | 60 |
-| Rail total (`8 × pitch + glyph`) | 616 | 512 | 512 |
+| Rail height (`9 × pitch`) | 657 | 540 | 540 |
 | Rail fits in height | 1024 ✅ | 834 ✅ | 768 ✅ |
 
 ## Portrait — 1024×1366 (`ref-1-portrait.png`)
@@ -138,9 +201,11 @@ Derived sizes at the other landscape viewports:
 | Drink name | `y≈1140`, 319px wide | 36px / 300 |
 | Ingredient line | `y≈1185` | Gloss is dropped in portrait — the row would collide with the affordance |
 | Recipe affordance | `作り方` `y≈1164`, `RECIPE →` `y≈1188`, right-aligned; **stacked**, no rule | Footer, right |
-| Rule above rail | `y=1233`, `x 55→969` | Full content width, `--color-hairline-field` |
-| Rail kanji centre | `y≈1290`, pitch 108px, span `x 80→943` centred on 512 | `--rail-item: 108px` |
-| Rail romaji | `y≈1309`, beneath each glyph | Not rotated |
+| Rule above rail | `y=1233`, `x 55→969` | Full content width, `--color-hairline-field`; the band's top border |
+| Rail band | `y 1233→1320` (87px) | `--rail-band`; each slot stretches to fill it |
+| Rail row | `y 1272→1320` (48px) | `--rail-row`, pinned to the slot's bottom edge |
+| Rail kanji centre | `y≈1290`, pitch 108px, span `x 80→943` centred on 512 | `--rail-item: 108px`, glyph at 36% of the row |
+| Rail romaji | `y≈1309`, beneath **every** glyph, selected and unselected alike | Not rotated; 70% of the row |
 | Rail bottom | 46px from viewport bottom | `calc(var(--edge) - 10px)` |
 
 Derived sizes at the other portrait viewports:
@@ -150,9 +215,18 @@ Derived sizes at the other portrait viewports:
 | `--edge` | 56 | 44 | 44 |
 | Render frame `min(58svw, 44svh)` | 594 | 484 | 445 |
 | Watermark `28svw` | 287 | 234 | 215 |
-| `--rail-item` | 108 | 88 | 80 |
-| Rail total (`9 × pitch`) | 972 | 792 | 720 |
-| Rail fits in width | 1024 ✅ | 834 ✅ | 768 ✅ |
+| `--rail-item` | 108 | 80 | 80 |
+| `--rail-band` / `--rail-row` | 87 / 48 | 77 / 44 | 77 / 44 |
+| Rail width (`9 × pitch`) | 972 | 720 | 720 |
+| Content column (viewport − 2×`--edge`) | 912 | 746 | 680 |
+| Rail fits in viewport | 1024 ✅ | 834 ✅ | 768 ✅ |
+
+**The portrait rail is allowed to be wider than the content column, and the reference shows it
+that way** — 972px of pitch against 912px of column at the master. The centred row overflows
+symmetrically into the shell's edge padding: the slot boxes bleed, the glyph ink does not, and the
+outermost hit targets reach further towards the bezel for it. What must never overflow is the
+**viewport**, which is why 768×1024 is the binding case for `--rail-item` in portrait. The rule
+above the rail stays on the nav, so it keeps the content width rather than the rail's.
 
 **Portrait drops the kanji gloss from the title block.** It survives in the recipe overlay footer,
 which is where the reference puts it in portrait too. Losing it is correct: the footer row has to
@@ -167,6 +241,13 @@ Measured at 1366×1024. Two nested insets, and the hairline is **outside** the p
 | Hairline frame | 56px all sides (`x 56→1310`, `y 56→968`) | `var(--edge)` — the frame sits exactly on the main view's content margin |
 | Paper panel | 70px all sides (`x 70→1296`, `y 70→954`) | `calc(var(--edge) + 14px)` |
 | Panel padding | 56px | `--panel-pad` |
+
+Because the frame is on the scrim, it takes a **field-side** ink role, not `--color-hairline`.
+Sampled at `x=56, y=512` in `ref-3-recipe.png` it reads `(185,186,169)`, which against the
+adjacent scrim `(72,85,58)` is paper at ~67%; the nearest shipped role is `--color-on-field-muted`
+at 62%. An
+ink-based hairline there would be invisible. The frame is a child of the panel rather than of the
+backdrop, so the two arrive as one object.
 
 Panel content box at 1366×1024: `1114 × 772`, from `x 126` to `x 1240`.
 

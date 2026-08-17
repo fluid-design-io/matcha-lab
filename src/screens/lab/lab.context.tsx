@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { MotionConfig } from 'motion/react'
 
 import { DRINKS, OPENING_DRINK_ID, getDrink, getDrinkIndex, type DrinkId } from '#/domain/drinks'
 
@@ -15,11 +16,8 @@ import type { LabContextValue } from './lab.types'
 const LabContext = createContext<LabContextValue | null>(null)
 
 /**
- * Which way each key moves along the collection.
- *
- * Both axes, because the rail reflows: it is a column on the right in landscape and a row along
- * the bottom in portrait, and a keyboard user should not have to know which. The two pairs mean
- * the same thing, which is also what makes this demoable on a laptop without a touchscreen.
+ * Which way each key moves along the collection. Both axes, because the rail is a column in
+ * landscape and a row in portrait and a keyboard user should not have to know which.
  */
 const STEP_KEYS: Readonly<Record<string, number>> = {
   ArrowRight: 1,
@@ -34,19 +32,18 @@ export function LabProvider({ children }: { children: ReactNode }) {
 
   const step = useCallback((delta: number) => {
     setSelectedId((current) => {
-      // Clamped, not wrapped. Nine drinks on a rail read as a list with two ends; a swipe that
-      // silently teleports from 深 back to 翠 loses the sense of a fixed collection.
+      // Clamped, not wrapped: a swipe that teleports from 深 back to 翠 loses the sense of a fixed
+      // collection with two ends.
       const next = Math.min(Math.max(getDrinkIndex(current) + delta, 0), DRINKS.length - 1)
       return DRINKS[next]!.id
     })
   }, [])
 
-  // Keyboard selection lives here rather than on the rail, because this is the one place that
-  // owns selection — the rail follows it, and so would anything else that grows a shortcut. It is
-  // a window listener, not a rail listener, so the arrows work wherever focus happens to be.
+  // A window listener rather than a rail listener, so the arrows work wherever focus is, and it
+  // lives here because this is the one place that owns selection.
   useEffect(() => {
-    // The recipe dialog traps focus and owns the keyboard while it is open; stepping the drink
-    // underneath it would change the recipe out from under the reader.
+    // The recipe dialog traps focus while it is open; stepping the drink underneath it would
+    // change the recipe out from under the reader.
     if (recipeOpen) return
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -79,7 +76,14 @@ export function LabProvider({ children }: { children: ReactNode }) {
     [selectedId, recipeOpen, step],
   )
 
-  return <LabContext value={value}>{children}</LabContext>
+  return (
+    <LabContext value={value}>
+      {/* `reducedMotion="user"` is the only thing that reaches a Motion `layout` animation —
+          `useMotionTokens()` can shrink a spring but cannot stop the shared rail underline
+          travelling the width of the rail. Motion's own default for this is "never". */}
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+    </LabContext>
+  )
 }
 
 /** Nothing in this app takes text today. Cheap insurance against the day something does. */

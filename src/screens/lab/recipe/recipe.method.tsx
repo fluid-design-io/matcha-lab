@@ -5,10 +5,8 @@ import { RecipeLabel } from './recipe.label'
 /**
  * `手順 / METHOD` — the imperative steps, numbered.
  *
- * The numbers are the only accent in the body of the panel and they are `--text-micro`, a third
- * the height of the step they count. `items-baseline` sits a 9px numeral on the same baseline as
- * the 18px step, including when the step wraps to a second line at the narrower viewports — the
- * number stays on the first line, which is the only place it means anything.
+ * `items-baseline` keeps the 9px numeral on the first line's baseline even when the step wraps,
+ * which is the only line it means anything on.
  */
 export function RecipeMethod({ drink }: { drink: Drink }) {
   return (

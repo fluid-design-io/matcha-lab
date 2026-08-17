@@ -10,9 +10,8 @@ type LabLayerProps = {
   /** Which of the six layers this is. Position in `MOTION_LAYERS` sets the delay. */
   layer: MotionLayer
   /**
-   * What counts as "a change" for this layer. Defaults to the selected drink, which is what every
-   * layer in the composition wants; the rail overrides it, because only the two slots whose
-   * selection changed have anything to dissolve.
+   * What counts as "a change" for this layer. Defaults to the selected drink; the rail overrides
+   * it, because only the two slots whose selection changed have anything to dissolve.
    */
   layerKey?: string
   /** Positioning and sizing for the layer as a whole. The copies inside inherit it. */
@@ -21,21 +20,10 @@ type LabLayerProps = {
 }
 
 /**
- * One cross-dissolving layer of the drink change.
- *
- * Old and new occupy the same grid cell, so both are on screen at once and this is a true
- * dissolve rather than a fade-out followed by a fade-in. Everything comes from
- * `dissolve(layer, tokens)` — the same function `src/lib/motion.ts` gives the calibration
- * prototype, so the app and the instrument cannot drift apart.
- *
- * The moving copy is `relative` so a caller can position children against the layer's own box
- * (the watermark and the rail both do). It stretches to fill the cell, which fills the wrapper.
- *
- * `initial={false}` because first paint is a still frame: nothing in this app animates on mount.
- *
- * Tokens come from `useMotionTokens()`, never from `MOTION` — that hook is what honours
- * `prefers-reduced-motion`, and it keeps listening, because iPadOS flips the setting from Control
- * Centre without reloading a home-screen app.
+ * One cross-dissolving layer of the drink change: old and new occupy the same grid cell, so both
+ * are on screen at once and this is a true dissolve rather than a fade-out then a fade-in. Tokens
+ * come from `useMotionTokens()`, which covers everything a spring can be shrunk to — a Motion
+ * `layout` animation is out of its reach and `LabProvider`'s `MotionConfig` handles that instead.
  */
 export function LabLayer({ layer, layerKey, className, children }: LabLayerProps) {
   const { drink } = useLab()

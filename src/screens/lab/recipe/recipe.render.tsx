@@ -1,47 +1,47 @@
-import { useState } from 'react'
-import Picture from '@gravity-ui/icons/Picture'
+import { useCallback, useState } from 'react'
 
 import { getDrinkRender, type Drink } from '#/domain/drinks'
 
+import { RenderPlaceholder } from '../lab.placeholder'
+
 /**
- * The drink render, reused at smaller scale, in a recessed paper well.
- *
- * The renders are flat `#7B8F63` squares — on the main view they melt into the field, and here they
- * become the one window of colour on the rice paper. That is the point: the panel repeats the
- * composition rather than re-styling it.
- *
- * `--recipe-render` is a container-query size set by the arrangement (`min(36cqw, 45cqh)` in
- * landscape, `min(45cqw, 30cqh)` in portrait) — see `recipe.overlay.tsx`. `max-w-full` plus
- * `aspect-square` means the square survives being narrower than its nominal size in portrait,
- * where the grid column and the render are within a pixel of each other.
+ * The drink render, reused at smaller scale, in a recessed paper well. Always square; the cell it
+ * sits in is sized and placed by `RecipePanel`.
  */
 export function RecipeRender({ drink }: { drink: Drink }) {
-  // The loaded *source*, not a boolean: if the selection changes under a mounted panel — which it
-  // can, during the closing animation — a boolean would still read `true` for an image that has
-  // not arrived, and the well would flash empty at full opacity.
-  const [loadedSrc, setLoadedSrc] = useState<string | null>(null)
   const src = getDrinkRender(drink.id)
+
+  // The loaded *source*, not a boolean: the selection can change under a mounted panel during the
+  // closing animation, and a boolean would still read `true` for an image that has not arrived.
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null)
+
+  // The stage has already painted this render, so the element reports `complete` in the commit,
+  // before the browser paints. `onLoad` alone cannot fire that early — and for an image served
+  // from cache some engines never fire it at all — which is what showed the placeholder first.
+  const measure = useCallback(
+    (node: HTMLImageElement | null) => {
+      if (node?.complete) setLoadedSrc(src)
+    },
+    [src],
+  )
+
   const loaded = loadedSrc === src
 
   return (
-    <div className="[grid-area:render] w-(--recipe-render) max-w-full">
-      <div className="relative aspect-square w-full bg-paper-shade">
-        {loaded ? null : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 border border-dashed border-hairline">
-            <Picture width={20} height={20} className="text-on-paper-faint" aria-hidden />
-            <p className="text-detail text-on-paper-faint">{drink.romaji} · render</p>
-          </div>
-        )}
-        <img
-          key={src}
-          src={src}
-          alt=""
-          onLoad={() => setLoadedSrc(src)}
-          decoding="async"
-          className="absolute inset-0 size-full object-contain transition-opacity duration-300"
-          style={{ opacity: loaded ? 1 : 0 }}
-        />
-      </div>
+    <div className="relative aspect-square w-full bg-paper-shade">
+      {loaded ? null : <RenderPlaceholder tone="paper" label={`${drink.romaji} · render`} />}
+      <img
+        key={src}
+        ref={measure}
+        src={src}
+        alt=""
+        onLoad={() => setLoadedSrc(src)}
+        decoding="async"
+        // A hard swap, not a fade: the panel's own arrival is the calibrated motion, and nothing
+        // in this app animates on mount.
+        className="absolute inset-0 size-full object-contain"
+        style={{ opacity: loaded ? 1 : 0 }}
+      />
     </div>
   )
 }

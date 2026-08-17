@@ -3,13 +3,9 @@ import Heart from '@gravity-ui/icons/Heart'
 import { useFavouriteCount, useFavouritesHydrated } from '#/domain/favourites'
 
 /**
- * 抹茶 · MATCHA COCONUT LAB, and the favourite count.
- *
- * The accent hairline dropping from the very top edge is a printer's registration tick, and the
- * only vertical rule in the app. It sits exactly on the left content margin and has to escape the
- * shell's top padding to reach the edge, which is what the negative offset is doing.
- *
- * Landscape sets the kanji and the label on one line; portrait stacks them, per the references.
+ * 抹茶 · MATCHA COCONUT LAB, and the favourite count. The accent hairline is a printer's
+ * registration tick on the left content margin, and the negative offset is what lets it escape the
+ * shell's top padding to reach the very edge of the viewport.
  */
 export function LabMasthead() {
   return (
@@ -23,8 +19,7 @@ export function LabMasthead() {
         }}
       />
 
-      {/* 12px stacked, measured off ref-1-portrait: 抹茶 ends at y=74 and the label starts at
-          y≈87. The 22px in landscape is horizontal and unrelated. */}
+      {/* 12px stacked, measured off ref-1-portrait: 抹茶 ends at y=74, the label starts at y≈87. */}
       <div className="flex flex-col gap-3 land:flex-row land:items-baseline land:gap-[22px] land:pl-2.5">
         <span className="font-jp text-kanji-sm text-on-field-strong untrack">抹茶</span>
         <span className="text-label text-on-field-muted untrack uppercase">Matcha Coconut Lab</span>

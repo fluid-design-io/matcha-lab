@@ -17,15 +17,36 @@ Two tokens now carry it, alongside the existing `--rail-item`:
 
 | Token | compact | `land` | `port` | roomy `land` | roomy `port` |
 | --- | --- | --- | --- | --- | --- |
-| `--rail-item` (pitch) | `min(52px, (100svw − 12px)/9)` | `60px` | **`80px`** | `73px` | `108px` |
+| `--rail-item` (pitch) | `min(52px, 100svw/9)` | `60px` | **`80px`** | `73px` | `108px` |
 | `--rail-band` (rule → baseline) | `68px` | — | `77px` | — | **`87px`** |
-| `--rail-row` (the slot) | `44px` | — | `44px` | — | **`48px`** |
+| `--rail-row` (the glyph's box) | `var(--tap)` | — | `var(--tap)` | — | **`48px`** |
+| `--tap` (minimum target) | `44px` | `44px` | `44px` | `44px` | `44px` |
 
-`--rail-band` is the nav's height and `--rail-row` the slot's, bottom-aligned inside it. That
-replaces the old `pt-7`, which could not be expressed as a utility: `roomy:` is registered after
-`land:` in `styles.css`, so a `roomy:pt-[38px]` would have beaten `land:pt-0` in roomy landscape.
-Every layout number in this file already lives on `:root` behind a media query for exactly that
-reason; these two now do too.
+`--rail-band` is the nav's height. That replaces the old `pt-7`, which could not be expressed as a
+utility: `roomy:` is registered after `land:` in `styles.css`, so a `roomy:pt-[38px]` would have
+beaten `land:pt-0` in roomy landscape. Every layout number in this file already lives on `:root`
+behind a media query for exactly that reason; these now do too.
+
+`--tap` is new and global — the 44px minimum was being spelled three different ways in three files
+(`--rail-row: 44px`, `size-11`, `-my-4 … py-4`). It is deliberately not responsive.
+
+### The band is the hit target; `--rail-row` is only where the ink sits
+
+`--rail-row` used to be the slot **button's** height, bottom-aligned in a taller `--rail-band`.
+That left the top of the visible ruled band dead to a finger: at 1024×1366 the nav occupied
+`y 1233–1320` but the buttons only `y 1272–1320`, so a tap at `y 1250` — directly above the glyph
+and plainly inside the band — hit nothing. 38px dead at the master, 33px at 768×1024, 23px on a
+phone.
+
+The button now stretches to the whole band (the nav dropped `items-end`, so the flex default
+stretches it), and an absolutely-positioned `--rail-row` box pinned to the band's bottom edge
+carries the glyph, the romaji and the shared underline. **Every measured position is unchanged** —
+the box is exactly where the button used to be — but the target grows from 108×48 to 108×86 in the
+portrait master, 80×44 → 80×76 at 768×1024, and 52×44 → 52×67 on a phone.
+
+One visible consequence: the global `:focus-visible` outline now traces the real target, so in
+portrait the keyboard focus ring is band-height and its top edge lands ~3px above the rule. It is
+honest about what is tappable; if it reads as crowding the rule it should move to the inner box.
 
 ### The `--rail-item` disagreement, resolved down
 
@@ -41,8 +62,20 @@ clipped by the screen. Nine of 80 come to 720 and clear it with 24px a side. 92 
 appears to be a stale figure — it is not derivable from either master. The roomy `108px` is
 untouched, because that one *is* measured off `ref-1-portrait.png`.
 
-The geometry doc's table is the thing that is wrong here and I do not own that file — see
-**Left for the integrator**.
+### The roomy-portrait branch was clipping itself
+
+`--rail-item: 108px` was guarded on `(width >= 960px) and (height >= 1280px)`, borrowed from the
+`roomy` variant. But `roomy` is a *density* axis and 960 is its portrait floor, so a 960×1280
+viewport got nine 108px slots — 972px of rail inside 960px of screen. The row overflowed 6px past
+each end slot, the outermost glyph centre landed at `x=48` inside the 56px margin, and
+`scrollWidth > clientWidth` meant the roving-tabindex `.focus()` in `rail.tsx` would have scrolled
+the shell sideways with no way back.
+
+**The branch is now guarded at `width >= 1024px`**, which is the portrait master's own width and
+the smallest viewport nine 108px slots fit. Between 960 and 1023 wide, portrait keeps `port`'s
+80px pitch (720px, comfortable) while still getting roomy's type scale and 56px edge — which is
+correct, because density and rail pitch are separate axes. Clamping the pitch with a `min()` was
+the alternative and was rejected: it would have made the master's measured 108 a coincidence.
 
 ### The rail bleeds; the ink does not
 
@@ -106,36 +139,65 @@ there with its own `22px`.
 Base is the compact treatment and it takes both phone orientations, since 852×393 fails `land`'s
 `height >= 620px` guard on purpose. Two things had to give:
 
-- `--rail-item` is `min(52px, (100svw − 12px)/9)`. Nine fixed 52px slots are 468px wide and a
-  393px phone cannot hold them; the `min()` is still a constant at any one viewport, so the pitch
-  is still fixed and the underline still slides a constant distance. **The honest cost: at 393px
-  the slots are 42px wide, under the 44px minimum.** Nine targets in a row on a phone cannot be
-  44px each — 396px of target against 393px of screen — so the row height carries the 44 instead.
-- `--frame-size` compact went `min(76svw, 40svh)` → `min(76svw, 34svh)`. At 852×393 the masthead,
-  footer and rail leave the stage ~143px and 40svh overflowed it into the footer. This is the one
-  token I changed that ticket 08 did not strictly ask for; it is compact-only and portrait compact
-  is nowhere near the limit either way.
+- `--rail-item` is `min(52px, 100svw/9)`. Nine fixed 52px slots are 468px wide and a 393px phone
+  cannot hold them; the `min()` is still a constant at any one viewport, so the pitch is still
+  fixed and the underline still slides a constant distance. **The honest cost: at 393px the slots
+  are 43.67px wide, just under the 44px minimum.** Nine targets in a row on a phone genuinely
+  cannot be 44px each — 396px of target against 393px of screen — so the band height carries the
+  44 instead. The first version subtracted a cosmetic `- 12px` from the viewport before dividing,
+  which bought nothing (the slot boxes are invisible and already bleed ~18px per side into the
+  shell padding) and cost 1.3px per slot, taking them to 42.33px. That term is gone.
+- `--frame-size` compact is `min(76svw, 40svh)` in portrait and `min(76svw, 34svh)` in landscape,
+  split by a bare `@media (aspect-ratio >= 1)` sitting between the base `:root` and the `land`
+  block. It was briefly `34svh` for *both*: 852×393 leaves the stage only ~143px and `40svh`
+  overflowed it into the footer. But that flipped which term binds on a portrait phone — at
+  393×852, `40svh` is 340.8 and `34svh` is 289.7 against `76svw`'s 298.7 — so portrait phones
+  silently lost 9px of render to fix a landscape problem. The aspect guard gives each orientation
+  its own ceiling and leaves `land`/`port`/`roomy` untouched, since those all override it later.
+
+### Also in `styles.css`: the scrim is derived now
+
+`--color-scrim` was `color-mix(in oklab, #414f34 88%, transparent)` — a hex literal, which meant it
+would silently stop tracking the ground if `--color-field-deep` were ever retuned, and it put a
+seventh colour into a system documented as six. It is now
+`oklch(from var(--color-field-deep) 0.41 c h / 0.86)`.
+
+**DESIGN-TASTE's own formula for this was wrong and could not be shipped as written.** It specified
+`L 0.34`, which resolves to base `#2E3E15` and composites over `#7B8F63` to `#394A20` — ΔE 0.071 in
+OKLab from the `#4D5B3E` measured off `ref-3-recipe.png`, a visibly darker and more saturated wash
+than either the reference or what was on screen. Sweeping `L` with `c` and `h` inherited:
+
+| Scrim | Base | Over the field | ΔE from `#4D5B3E` |
+| --- | --- | --- | --- |
+| DESIGN-TASTE `L 0.34 / 0.86` | `#2E3E15` | `#394A20` | 0.0712 |
+| shipped literal `#414F34 / 0.88` | `#414F34` | `#48573A` | 0.0163 |
+| **derived `L 0.41 / 0.86`** | `#405128` | `#485A30` | 0.0207 |
+
+0.016–0.018 is the floor for any `L`, because inheriting `--color-field-deep`'s chroma (0.0666)
+overshoots the reference's own (0.0486) and no lightness fixes that. `L 0.41` is within 0.002 of
+that floor and within 0.0184 of the shipped literal, so the scrim does not visibly change — it just
+stops being a magic number. DESIGN-TASTE now carries `0.41`.
 
 ### Verified, and not
 
 - `bun run typecheck` clean, `bun test` 20 pass.
-- Every new utility compiles: checked by running `@tailwindcss/node`'s `compile()` over
-  `styles.css` with the candidate list, rather than by trusting that `port:-mb-2.5` and
-  `h-(--rail-band)` are real.
+- Every utility compiles: checked by running `@tailwindcss/node`'s `compile()` over `styles.css`
+  with the candidate list, rather than by trusting that `port:-mb-2.5`, `h-(--rail-band)`,
+  `land:h-auto` and `size-(--tap)` are real. All 42 candidates resolve.
 - Geometry is **computed, not measured**. Nobody has looked at portrait in a real browser. The
-  numbers above are the ones to re-check first at 1024×1366 and 768×1024.
+  numbers above are the ones to re-check first at 1024×1366 and 768×1024. The three geometry
+  changes in this pass (band-height buttons, the 1024 guard, the `--frame-size` aspect split) are
+  all argued from the token stack, not from a rendered page.
 - Rotation preserving selection follows from the rail being one component whose children never
   unmount — there is no code path that resets `selectedId` — but it has not been exercised on a
   device.
 
 ### Left for the integrator
 
-`docs/design/layout-geometry.md` is not this stream's file and two rows in it are wrong:
-
-- **`--rail-item` `port: 92px`** — should be `80px`, per the reasoning above.
-- **`--rail-w` `land: 138px`** — `styles.css` has `116px` at `land` and `138px` only at roomy
-  `land`, which is what ticket 07 measured and verified (rail kanji centre `x=1259` at the
-  master). The table has no column for the roomy-landscape split.
+Nothing outstanding. `docs/design/layout-geometry.md` carried two wrong rows when this ticket was
+first answered (`--rail-item` `port: 92px`, and a `--rail-w` table with no roomy-landscape split);
+both are now correct in that file, along with `--tap`, the 1024 guard, the `--frame-size` split and
+the band-fills-the-slot rule.
 
 ## Question
 

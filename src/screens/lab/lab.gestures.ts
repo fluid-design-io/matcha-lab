@@ -15,30 +15,20 @@ const COMMIT_DISTANCE = 64
 const VELOCITY_WEIGHT = 0.12
 
 /**
- * How much of the finger's travel the composition actually follows.
- *
- * The render is pinned — `dragConstraints` is a point, so every pixel of movement is elastic — and
- * this is the elasticity. At 0.2, a 200px swipe slides the render 40px: enough to feel the drink
- * being pushed aside, nowhere near enough to read as a carousel.
+ * How much of the finger's travel the render follows. At 0.2 a 200px swipe slides it 40px — enough
+ * to feel the drink being pushed aside, nowhere near enough to read as a carousel.
  */
 const YIELD = 0.2
 
 /**
- * And how much it yields at the ends of the collection.
- *
- * The ends are ends, not a carousel — `step()` clamps, so a swipe past 深 does nothing. Without
- * this the gesture would feel identical to one that worked and simply fail, which reads as a
- * dropped input. A quarter of the give says "held" while the finger is still down, so the answer
- * arrives before the release rather than after it.
+ * The same at the ends, where `step` clamps and nothing will happen. A quarter of the give says
+ * "held" while the finger is still down, so a dead swipe reads as an edge, not a dropped input.
  */
 const YIELD_AT_END = 0.05
 
 /**
- * What a released swipe means: `1` forward, `-1` back, `0` nothing.
- *
- * Pulled out of the hook because it is the only part of the gesture that is a decision rather
- * than a binding, and a decision is worth being able to test. Distance and velocity are summed
- * rather than checked separately, so a long slow drag and a short fast flick can both commit
+ * What a released swipe means: `1` forward, `-1` back, `0` nothing. Distance and velocity are
+ * summed rather than checked separately, so a long slow drag and a short fast flick both commit
  * while a long drag that stops dead does not.
  */
 export function swipeStep(offsetX: number, velocityX: number): -1 | 0 | 1 {
@@ -58,17 +48,18 @@ export type DrinkSwipe = {
     readonly dragElastic: { left: number; right: number; top: 0; bottom: 0 }
     readonly dragMomentum: false
     readonly onDragEnd: (event: unknown, info: PanInfo) => void
-    readonly style: { x: MotionValue<number> }
+    /**
+     * Motion writes the gesture straight to this value instead of transforming the element it is
+     * spread onto, which must stay put — a surface that rode the elastic would sit over the rail
+     * for the length of the snap-back and swallow taps on it.
+     */
+    readonly _dragX: MotionValue<number>
   }
 }
 
 /**
- * Horizontal swipe to move between drinks — the gesture that makes this feel iPad-native rather
- * than a website on a tablet. It reads the same in both orientations: the rail reflows, the swipe
- * does not, because the swipe is about the collection and not about the rail.
- *
- * Swiping left moves forward, the way a page turns. Only `opacity` and `transform` move, so the
- * whole gesture composites.
+ * Horizontal swipe to move between drinks, identical in both orientations because the swipe is
+ * about the collection and not about the rail. Swiping left moves forward, the way a page turns.
  */
 export function useDrinkSwipe(): DrinkSwipe {
   const { drink, step } = useLab()
@@ -102,7 +93,7 @@ export function useDrinkSwipe(): DrinkSwipe {
       // Momentum on a pinned element just overshoots and springs back twice.
       dragMomentum: false,
       onDragEnd,
-      style: { x },
+      _dragX: x,
     },
   }
 }

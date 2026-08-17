@@ -8,20 +8,11 @@ import { panelTransition, useMotionTokens } from '#/lib/motion'
 
 /**
  * `♥ SAVED` — the most tactile moment in the app, and the only thing allowed to be louder than the
- * ambient motion.
+ * ambient motion: three 12px hearts stacked in one box, the accent outline arriving a beat before
+ * the fill, plus one scale overshoot.
  *
- * Three 12px hearts stacked in one 12px box, and the state arrives in two beats:
- *
- * 1. the accent outline fades up over the resting outline — *this one is on*
- * 2. one `--motion-stagger` later, the fill lands
- *
- * plus a single scale overshoot on the whole box. Every one of those is `opacity` or `transform`;
- * nothing here animates `color`, which is what the three-layer stack buys.
- *
- * **The overshoot is derived from `tokens.drift`, not switched on it.** Reduced motion zeroes the
- * travel tokens, so the same setting that removes 4px of rise from the drink change collapses
- * `[1, 1.125, 1]` to `[1, 1, 1]` here — the state still changes, it just stops bouncing. No
- * separate reduced-motion branch to forget about.
+ * The stack exists so nothing has to animate `color` — every value here is `opacity` or
+ * `transform`.
  */
 export function RecipeFavourite({ drink }: { drink: Drink }) {
   const saved = useIsFavourite(drink.id)
@@ -38,8 +29,8 @@ export function RecipeFavourite({ drink }: { drink: Drink }) {
       onClick={() => toggle(drink.id)}
       aria-pressed={saved}
       aria-label={`${drink.name} — ${saved ? 'saved to favourites' : 'save to favourites'}`}
-      // The negative block margin buys a 44px target out of a 12px glyph without adding a single
-      // pixel to the footer row.
+      // Block padding grows the target around the 12px glyph and the matching negative margin
+      // takes it back off the layout, so the footer row still measures only the glyph.
       className="-my-4 flex shrink-0 items-center gap-2.5 py-4"
     >
       {/* `initial={false}` on all three: opening the panel on an already-saved drink must show a

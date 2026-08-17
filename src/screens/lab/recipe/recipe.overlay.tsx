@@ -1,36 +1,20 @@
+import type { CSSProperties } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { AnimatePresence, motion } from 'motion/react'
 
 import { panelTransition, useMotionTokens } from '#/lib/motion'
+import { cn } from '#/lib/utils'
 
 import { useLab } from '../lab.context'
 import { RecipePanel } from './recipe.panel'
 
 /**
- * The recipe overlay — dialog mechanics, the scrim, the frame, and the way the panel arrives.
+ * The recipe overlay — dialog mechanics, the scrim, the hairline frame, and the way the panel
+ * arrives.
  *
- * ## Base UI, and the four halves of the exit animation
- *
- * Focus trap, escape, scroll lock and ARIA all come free from the dialog primitive, and every part
- * of the motion skill's Base UI recipe is load-bearing here: the open state is hoisted (it already
- * lives in `lab.context`), the `Portal` is `keepMounted`, `AnimatePresence` wraps the conditional,
- * and the `motion` components go in through `render` rather than being spread. Base UI holds the
- * portal mounted for as long as `element.getAnimations()` reports work, which is why both exits
- * animate `opacity` — Motion runs that through WAAPI, where Base UI can see it.
- *
- * ## Container queries
- *
- * This is the one component in the app that gets them, and the container is the popup — see
- * `recipe.panel.tsx` for what they drive. Two details that are easy to get wrong:
- *
- * - `container-type: size`, not `inline-size`, because the panel's rhythm is `cqh`. It is set
- *   through `style` so it cannot lose a specificity race with a utility class.
- * - the popup carries **no padding**. `cqw` resolves against the container's content box, so
- *   padding here would quietly shrink every `cq` number inside. The padding is on the paper.
- *
- * The panel's arrangement switches on its own **aspect ratio** rather than its width: portrait at
- * 1024×1366 gives an 884px panel and landscape at 1024×768 gives a 908px one, 24px apart, so any
- * width threshold separating those two would be a coincidence rather than a rule.
+ * The exit needs the hoisted open state, `keepMounted`, `AnimatePresence` and `render` all four
+ * together, and both exits must animate `opacity`, because Base UI holds the portal mounted only
+ * while `element.getAnimations()` reports work.
  */
 export function RecipeOverlay() {
   const { drink, recipeOpen, setRecipeOpen } = useLab()
@@ -45,7 +29,7 @@ export function RecipeOverlay() {
             {/* A darkened field, never a black wash: `--color-scrim` is the field taken down, so
                 the world behind the panel is still green and still moving. */}
             <Dialog.Backdrop
-              className="fixed inset-0 bg-scrim"
+              className="fixed inset-0 z-20 bg-scrim"
               render={
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -57,18 +41,32 @@ export function RecipeOverlay() {
             />
 
             <Dialog.Popup
-              className="fixed"
-              style={{
-                // The frame lands exactly on the main view's content margin and the paper 14px
-                // inside it, so the overlay registers with the composition it covers — through the
-                // safe area, the same way the shell does it.
-                top: 'calc(max(var(--edge), env(safe-area-inset-top)) + 14px)',
-                right: 'calc(max(var(--edge), env(safe-area-inset-right)) + 14px)',
-                bottom: 'calc(max(var(--edge), env(safe-area-inset-bottom)) + 14px)',
-                left: 'calc(max(var(--edge), env(safe-area-inset-left)) + 14px)',
-                containerType: 'size',
-                containerName: 'recipe',
-              }}
+              className={cn(
+                // The third and last layer of the app: the field canvas is z-0, `LabShell` is
+                // z-10. Without a positive z the shell wins on tree order and hit-tests over the
+                // whole dialog.
+                'fixed z-20',
+                // The frame lands on the main view's content margin and the paper sits inside it,
+                // so the overlay registers with the composition it covers. A compact viewport has
+                // no room for either: there the panel *is* the viewport, safe area aside.
+                '[--recipe-frame:0px] [--recipe-margin:0px]',
+                'land:[--recipe-frame:14px] land:[--recipe-margin:var(--edge)]',
+                'port:[--recipe-frame:14px] port:[--recipe-margin:var(--edge)]',
+              )}
+              style={
+                {
+                  top: 'calc(max(var(--recipe-margin), env(safe-area-inset-top)) + var(--recipe-frame))',
+                  right:
+                    'calc(max(var(--recipe-margin), env(safe-area-inset-right)) + var(--recipe-frame))',
+                  bottom:
+                    'calc(max(var(--recipe-margin), env(safe-area-inset-bottom)) + var(--recipe-frame))',
+                  left: 'calc(max(var(--recipe-margin), env(safe-area-inset-left)) + var(--recipe-frame))',
+                  // `size`, not `inline-size`: the panel's rhythm is `cqh`, which `inline-size`
+                  // does not answer. Set through `style` so it cannot lose to a utility class.
+                  containerType: 'size',
+                  containerName: 'recipe',
+                } as CSSProperties
+              }
               render={
                 <motion.div
                   // It rises the same 4px the rest of the app moves, and leaves the way it came.
@@ -80,20 +78,20 @@ export function RecipeOverlay() {
                 />
               }
             >
-              {/* The hairline frame sits outside the paper, on the scrim — measured off
-                  ref-3-recipe.png, where it reads as paper at ~67% rather than as an ink hairline.
-                  It belongs to the panel rather than to the backdrop so the two arrive as one
-                  object. */}
+              {/* Outside the paper, on the scrim: sampled off the reference it reads as paper at
+                  ~67%, not as an ink hairline. It belongs to the panel rather than the backdrop so
+                  the two arrive as one object, and it goes with the margin it registers against. */}
               <span
                 aria-hidden
-                className="pointer-events-none absolute -inset-3.5 border border-on-field-muted"
+                className="pointer-events-none absolute hidden border border-on-field-muted port:block land:block"
+                style={{ inset: 'calc(var(--recipe-frame) * -1)' }}
               />
 
               <RecipePanel drink={drink} />
 
-              {/* Not set anywhere in the panel: the reference has no room for a sentence and the
-                  five axes say it better. It is worth keeping as the dialog's description, where a
-                  screen reader gets the flavour of the drink on open. */}
+              {/* Set nowhere in the panel: the reference has no room for a sentence and the five
+                  axes say it better, so a screen reader gets it on open and the layout gets
+                  nothing to fit. */}
               <Dialog.Description className="sr-only">{drink.tastingNote}</Dialog.Description>
             </Dialog.Popup>
           </Dialog.Portal>

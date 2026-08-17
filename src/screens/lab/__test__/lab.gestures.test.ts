@@ -3,12 +3,9 @@ import { describe, expect, test } from 'bun:test'
 import { swipeStep } from '../lab.gestures'
 
 /**
- * The swipe itself cannot be tested here — Motion's drag needs a real pointer and a real
- * frameloop. What can be tested is the decision it makes on release, which is the part with an
- * opinion in it.
- *
- * Sign convention: the finger moving left is a negative offset and moves *forward* through the
- * collection, the way a page turns.
+ * The swipe itself needs a real pointer and a real frameloop; what is testable is the decision it
+ * makes on release. Sign convention: the finger moving left is a negative offset and moves forward
+ * through the collection, the way a page turns.
  */
 describe('swipeStep', () => {
   test('a settled drag under the threshold does nothing', () => {

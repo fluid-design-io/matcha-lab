@@ -21,29 +21,57 @@ grid would only be a cell it ignores.
 | `recipe.label.tsx` | The `材料 / BUILD` heading, shared by two of the three |
 | `recipe.footer.tsx` / `recipe.favourite.tsx` | Gloss, serve, base temperature, `♥ SAVED` |
 
-`recipe.panel.tsx` is split from `recipe.overlay.tsx` for a reason beyond tidiness: it makes the
-panel renderable without a dialog, which is what let the layout be measured at every viewport (see
-*Verification*). Nothing here is exported past `index.ts` — the panel reads the selected drink and
-the open flag off `lab.context`, so there are no props to thread.
+`recipe.panel.tsx` is split from `recipe.overlay.tsx` so the paper knows nothing about dialogs,
+portals or motion. Nothing here is exported past `index.ts` — the panel reads the selected drink
+and the open flag off `lab.context`, so there are no props to thread. The dashed empty/loading
+frame is not in this folder at all: it is one leaf, `src/screens/lab/lab.placeholder.tsx`, taking a
+`tone` of `field` or `paper`, shared with the stage.
+
+### The overlay had no stacking position, and nothing in it could be touched
+
+The first build gave `Dialog.Backdrop` and `Dialog.Popup` no `z-index`, so both resolved to `auto`.
+`LabShell` is `relative z-10`. Positive z beats tree order, so **the entire app shell painted and
+hit-tested above the whole dialog**: `document.elementFromPoint` at the centre of the close button
+returned the rail's `<nav>`, a real click left the panel open, the favourite toggle — ticket 12's
+only control — could not be pressed, a scrim press did not dismiss, and a drag over the open panel
+reached the stage's swipe surface and changed the drink underneath, because `lab.context` disables
+the keyboard while the recipe is open but nothing blocked the pointer.
+
+Both parts are now `z-20`, which is the whole system: **field canvas `z-0`, `LabShell` `z-10`,
+overlay `z-20`** — three layers, one order, no fourth value anywhere in `src/`.
+
+Verified by hit test rather than by reasoning, because reasoning is what produced the bug. With the
+panel open, `elementFromPoint` was sampled on a grid across the whole viewport — 1271 points at
+1366×1024, 1681 at 1024×1366, and the full grid at both compact sizes — and **not one sample
+resolves to anything inside `LabShell`**; every point is the popup or the backdrop. Individually:
+the close button, the favourite toggle and the paper all hit-test to themselves; a real pointer
+click on the close button closes; a real pointer click on the scrim dismisses; a real pointer click
+on the favourite flips `aria-pressed`, rewrites `matcha-lab:favourites` and leaves the panel open.
+
+The swipe is proved the same way and deliberately not by gesture: Motion's frameloop does not run in
+the in-app pane, so a synthetic drag commits nothing there and a passing drag test would prove
+nothing either. What matters is upstream of the gesture — a swipe can only start where a
+`pointerdown` lands, and the grid above says no point in the viewport lands on the stage's surface
+while the recipe is open.
 
 ### Geometry, built versus reference
 
-Rendered at 1366×1024 and read back out of the DOM:
+Read out of the running app at 1366×1024, with the dialog open — not out of a harness:
 
 | Element | Built | Reference |
 | --- | --- | --- |
-| Hairline frame | inset 56 all sides | `x 56→1310`, `y 56→968` |
+| Hairline frame | `x 56→1310`, `y 56→968` | `x 56→1310`, `y 56→968` |
 | Paper panel | `70→1296`, `70→954` | `70→1296`, `70→954` |
 | Content box | `126→1240`, `126→898` (1114×772) | 1114×772, `x 126→1240` |
-| Render well | `126→524` (398²) | `126→525`, `192→591` (399) |
+| Render well | `126→524`, `200→598` (398²) | `126→525`, `192→591` (399) |
 | Build column | `577→882` (305 wide) | `x 578`, width 302 |
 | Method / tasting column | `935→1240` (305 wide) | `x 933→1240` |
-| Method step pitch | 44.5 | 45 |
-| Rule under the method list | `y 439` | `y≈452` |
-| Axis row pitch | 32 | 33 |
+| Method step pitch | 44.7 | 45 |
+| Rule under the method list | `y 443` | `y≈452` |
+| Axis row pitch | 31.8 | 33 |
 | Axis scale line | `x 1029→1240` | `x 1040→1240` |
-| Extremes line | `y 679` | `y≈684` |
-| Footer rule | `y 849` | `y≈841` |
+| Extremes line | `y 683` | `y≈684` |
+| Footer rule | `y 853` | `y≈841` |
 
 Diamonds land exactly at `value/10` and fill with the accent precisely where `leadsCollection`
 says so — 8/10 and 9/10 filled for NAGI's 椰 and 涼, the other three hollow. Both derivations come
@@ -58,18 +86,44 @@ The container is the **popup**, and two details are easy to get wrong and expens
 - **`container-type: size`, not `inline-size`.** `--recipe-render` and the whole vertical rhythm
   are `cqh` expressions and `inline-size` does not answer `cqh` at all.
 - **The container carries no padding.** `cqw`/`cqh` resolve against the container's *content box*,
-  so padding on the popup would silently shrink every `cq` number inside it by twice
-  `--panel-pad`. The padding lives on the paper element inside the container instead.
+  so padding on the popup would silently shrink every `cq` number inside it by twice the padding.
+  The padding lives on the paper element inside the container instead.
 
-**The arrangement switches on the panel's own aspect ratio, not its width.** Portrait at 1024×1366
-gives an 884px panel; landscape at 1024×768 gives a 908px one. Twenty-four pixels apart — any width
-threshold separating those two would be a coincidence, not a rule. Tailwind's `@[…]` sugar only
-generates width queries (`@[aspect-ratio>=1]:` compiles to the nonsense
-`@container (width >= aspect-ratio>=1)`), so these are written as arbitrary variants:
-`[@container_recipe_(aspect-ratio>=1)]:…`, which emits `@container recipe (aspect-ratio>=1)`
-correctly and sorts after the unprefixed utilities.
+Tailwind's `@[…]` sugar only generates width queries (`@[aspect-ratio>=1]:` compiles to the nonsense
+`@container (width >= aspect-ratio>=1)`), so every query here is written as an arbitrary variant —
+`[@container_recipe_(aspect-ratio>=1)_and_(height>=600px)]:…` — which emits the at-rule verbatim and
+sorts after the unprefixed utilities. **Those strings must be written out in full**; building them
+by concatenating a prefix constant onto a utility looks tidier and produces nothing, because
+Tailwind's scanner only ever sees complete literals in the source.
 
-### The rhythm, and why nothing scrolls
+#### Four arrangements, on two questions about the panel's own box
+
+The panel's **long axis** says which way the groups run; its **short axis** says whether all four
+groups fit at all.
+
+| | short axis ≥ 600px | short axis < 600px |
+| --- | --- | --- |
+| **wide** (`aspect-ratio ≥ 1`) | render │ build │ notes-stacked | build │ method │ rule │ tasting |
+| **tall** (`aspect-ratio < 1`) | render + build, notes-side-by-side beneath | build / method / rule / tasting |
+
+Neither threshold is a coincidence. Aspect ratio was already the right question for landscape versus
+portrait: the portrait panel at 1024×1366 is 884px wide and the *landscape* one at 1024×768 is
+908px, twenty-four pixels apart, so any width threshold separating those two would be an accident.
+The 600px short-axis line sits in a 335px void — every tablet panel measures 652–1226px on its short
+axis, every phone panel 317px — and it is where it is because of measurement, not roundness: see
+*The short axis is a floor, not a fence* below.
+
+The four are mutually exclusive as conditions, so the three prefixed ones cannot fight each other
+and only their order against the unprefixed set matters — and Tailwind always emits variants after
+those. That is the only cascade assumption in the file.
+
+The notes wrapper is the piece that makes the tight cases cheap: it is a grid in both roomy
+arrangements and **`display: contents`** in both tight ones, so `RecipeMethod`, the rule and
+`RecipeTasting` become peers of the build column and the outer grid places all four in one track.
+Same children, same divider element, no second component — the rule stretches into whichever 1px
+track it lands in.
+
+### The rhythm, the padding, and why nothing scrolls
 
 Five container-relative variables on the paper. The centre of each clamp is the measurement at the
 master; the bounds stop portrait going loose and 1024×768 going tight.
@@ -82,40 +136,181 @@ master; the bounds stop portrait going loose and 1024×768 going tight.
 --recipe-row:  clamp(22px, 3.6cqh, 34px)   /* axis row pitch */
 ```
 
-This is the whole mechanism: the spacing compacts *with the panel* instead of holding still while
-the content grows. It is why 1024×768 fits without a special case.
+The spacing compacts *with the panel* instead of holding still while the content grows. It is why
+1024×768 fits without a special case.
 
-`手順 / METHOD` and `味 TASTING NOTE` are one group that turns — stacked with a horizontal rule
-between them in landscape, side by side with a vertical one in portrait. Same three children and
-the same divider element; the rule simply stretches into whichever 1px track it lands in. Portrait
-is a re-grouping, never a squeeze.
+**The padding is now part of that system, and was not.** It used to be `--panel-pad`, a `:root`
+token switched by a *viewport* media query — 28px below `roomy`, 56px at it — which made the
+panel's single largest spacing value the one thing in it that did not respond to the panel. The
+1024×1366 panel is 884px wide and the 1024×768 panel is 908px: 24px apart in width, 80px apart in
+content box, decided by the viewport. That is exactly the coincidence the aspect-ratio argument
+above rejects. It is replaced by `--recipe-pad`, set on the paper, tracking the panel's **short**
+axis with `cqmin` so a wide short panel does not spend the axis it is short of on margin:
 
-### Verification
+```
+--recipe-pad: clamp(16px, calc(11.2cqmin - 43px), 56px)
+```
 
-The in-app browser pane cannot run the app, so the panel was rendered on its own instead:
-`renderToStaticMarkup(<RecipePanel/>)` into a standalone page carrying the real compiled Tailwind
-CSS, the real subset fonts and the real renders — all inlined as `data:` URIs — then loaded from a
-`file://` path inside the repo at each viewport and read back with `getBoundingClientRect`. That is
-what produced the table above. Two conditions were asserted at every size: **no element's box
-passes the panel's content box**, and **`scrollHeight === clientHeight` on the paper**.
+A straight line through two measurements — 56px where the short axis is the masters' 884px, 30px
+where it is the tightest tablet's 652px. A plain `6.3cqmin` also reproduces the master exactly but
+hands 1024×768 41px of padding, which measured out at **8px** of remaining slack on 深 SHIN; the
+ramp restores it to 41px. Tight panels take a flat 16px instead.
 
-| Viewport | Panel | Columns | Slack below the tallest column | Scroll |
+`--panel-pad` in `src/styles.css` now has **no consumer anywhere in `src/`** — removing it belongs
+to whoever owns that file.
+
+### Compact: a fourth arrangement, not a suppressed control
+
+At 852×393 and 393×852 the panel used to overflow its own `overflow-hidden` paper with no
+scrollbar and no visible symptom — every drink at 852×393 (深 SHIN `458/317`, 透 TŌ `492/317`), the
+build list running through the footer rule and the whole 味 TASTING NOTE stack vanishing under a
+dangling heading; at 393×852, 透 TŌ `795/776`, 苺 ICHIGO `785/776`, 深 SHIN `827/776`.
+
+Phones are nice-to-have polish and neither size is a target viewport, but a control that opens a
+panel which silently eats its own content is a defect at any size, and `DESIGN-TASTE.md` forbids
+the scroller that would hide it. The alternative — suppressing the `RECIPE →` affordance below the
+tablet sizes — was rejected: it lives in `lab.footer.tsx`, and a collection where a third of the
+authored content is unreachable on a phone is a worse answer than a panel that reflows. The layout
+is the thing that was wrong, so the layout is what changed. Three moves, each one an existing house
+pattern applied at a new size:
+
+- **The panel fills the viewport.** The 14px hairline frame and the `--edge` margin exist so the
+  overlay registers with the composition it covers; when it covers everything there is nothing to
+  register against, and at 393px of short axis those two spend 20% of the axis on registration
+  marks. The frame is `hidden` and the popup insets to the safe area alone. This is a viewport
+  switch (`land` / `port`), correctly — the popup's *position* is a viewport fact, unlike anything
+  inside it.
+- **The render drops.** It is the largest group and the only one that repeats something the stage
+  was showing a tap ago. Build, method and tasting exist nowhere else in the app.
+- **The build rows turn onto one line.** Label and quantity share a baseline instead of stacking,
+  the quantities right-aligning into a column — the same two pieces re-grouped, exactly the way the
+  notes group re-groups. Measured on 深 SHIN's five rows at 852×393: **168px turned, 254px
+  stacked**, against a body 258px tall. Stacked does not fit and turned has room to spare.
+
+Measured at 852×393: panel 852×393, padding 16, header 44, body 820×258 in four columns of
+224 │ 324 │ 1 │ 199, footer 31. At 393×852: panel 393×852, one 361px column, rows 248 / 198 / 1 /
+213, the rule running the full width between method and tasting.
+
+### The short axis is a floor, not a fence
+
+The threshold started at 480px, which is anywhere in the phone-to-tablet void and looked
+unimpeachable. Probing the boundary of the `land` variant — 900×620, the smallest viewport that
+qualifies for the landscape treatment at all — showed it was not:
+
+| Viewport | Panel | Roomy-wide slack |
+| --- | --- | --- |
+| 900×620 | 784×504 | **−61px** |
+| 900×680 | 784×564 | **−22px** |
+| 900×720 | 784×604 | 3px |
+| 1024×720 | 908×604 | 26px |
+| 1280×720 | 1164×604 | 26px |
+| 900×760 | 784×644 | 16px |
+| 1024×768 | 908×652 | 41px |
+
+Two things fall out. First, the paper's `scrollHeight` **did not report those overflows** — the
+content escapes the body grid and is clipped without ever growing the paper's scroll box, so
+`scrollHeight === clientHeight` is a necessary check and not a sufficient one. Every measurement
+here is the deepest text box against the body's bottom edge, and that is the check that matters.
+
+Second, no single short-axis number can be right: 784×564 fails while 1164×604 passes, so the
+requirement depends on **both** axes — the notes column stacks method over tasting at a third of the
+panel's width, and a narrower panel wraps more steps and needs more height. 600px is the highest
+line that leaves every measured passing case alone and catches every measured failing one, and it
+is a *floor under the arrangement*, not a fence between two designs.
+
+One residual, recorded rather than papered over: **900×720 (panel 784×604) fits with 3px to spare.**
+Nothing between it and the smallest declared target has less. Closing that band properly means a
+two-variable rule, which container queries cannot express without a second container, and which
+would put the four target viewports at risk to serve a window size nobody asked for. Left as is,
+with the numbers above so the next person does not have to rediscover them.
+
+### The second fade, and the placeholder that existed twice
+
+`recipe.render.tsx` gated its image on `onLoad` alone plus `transition-opacity duration-300`.
+`RecipePanel` mounts fresh on every open, so `loadedSrc` started `null` and `onLoad` — a task —
+could not fire before first paint. Opening the recipe on a drink whose render is already decoded,
+which it always is (the stage has painted it and `neighbourRenders` warms the pair), showed the
+dashed placeholder and then a 300ms crossfade into an image that had been ready the whole time: a
+second, uncalibrated fade, and a mount animation where `DESIGN-TASTE.md` § Motion says nothing
+animates on mount.
+
+It now reads `node.complete` in a ref callback, which runs in the commit before the browser paints
+— the approach `lab.stage.tsx` already used and already documented. It still tracks the loaded
+*source* rather than a boolean, because the selection can change under a mounted panel during the
+closing animation and a boolean would read `true` for an image that has not arrived. Verified on a
+genuine first open after a reload, with a `MutationObserver` on `documentElement` across the click
+that opens the panel: **six element insertions, zero of them the placeholder** — it is never put
+into the document at all. The image reads `complete: true`, `opacity: 1`,
+`transition-duration: 0s`, zero running animations.
+
+The dashed frame had also been written twice — `RenderFramePlaceholder` in `lab.stage.tsx` and an
+inline block in `recipe.render.tsx` — same dashed border, same `gap-3`, same 20×20 `Picture`, same
+`<romaji> · render` caption, already drifting (`size-full` versus `absolute inset-0`).
+`DESIGN-TASTE.md` calls it "the **only** surviving trace" of the mockups' drop-zone, singular, so it
+is now one leaf at `src/screens/lab/lab.placeholder.tsx` taking `tone="field"` or `tone="paper"`.
+The tone sets the colour once on the wrapper and the `Picture` inherits it through `currentColor`,
+which the design contract asks for and neither copy did. Both call sites measure the same box:
+`absolute inset-0` inside the stage's layer resolves to 369×369 at 1024×768, identical to the
+`size-full` it replaced.
+
+### Verification — and the blind spot in the technique that came before it
+
+**What the first pass did, and why it missed a blocker.** The panel is renderable without a dialog,
+so it was checked by `renderToStaticMarkup(<RecipePanel/>)` into a standalone page carrying the real
+compiled Tailwind CSS, the real subset fonts and the real renders inlined as `data:` URIs, loaded
+from a `file://` path at each viewport and read back with `getBoundingClientRect`. That is a good
+technique and it produced a correct geometry table. **Its blind spot is the entire reason a blocker
+shipped**: a page containing only the panel has no `LabShell` to lose a stacking contest to, no
+`Dialog.Backdrop`, no portal and no outside-press, so the one defect that made every control in the
+panel unusable was structurally invisible to it. A harness that renders a component out of its
+composition can only ever verify the component, never its place in the composition. Reach for it
+again for pure layout, and never for anything that has to be *reachable*.
+
+**What this pass does.** The app runs in the in-app browser pane — it hydrates, the rail responds,
+the dialog opens and closes — so the whole loop is driven live at each viewport: click each of the
+nine rail slots, open the recipe, read the DOM, close. Everything below is measured on the shipped
+app with the real dialog, the real portal and the real shell underneath it. Three conditions at
+every size: **`scrollHeight === clientHeight` and `scrollWidth === clientWidth` on the paper**, **the
+deepest text box in the body sits above the body's bottom edge**, and **no `elementFromPoint` sample
+resolves inside `LabShell`**. The second is not implied by the first — see *The short axis is a
+floor, not a fence*.
+
+The pane's one real limitation is unchanged and worth restating: it delivers zero
+`requestAnimationFrame` frames, so Motion never runs, the page never repaints after load, and
+screenshots taken after the first paint are stale. Layout and hit-testing are exact; anything
+frame-driven has to be checked in a real window.
+
+**All nine drinks × nine viewports, after the change — zero overflow, in either axis, everywhere.**
+
+| Viewport | Panel | Pad | Arrangement | Tightest slack |
 | --- | --- | --- | --- | --- |
-| 1366×1024 | 1226×884 | 398 / 305 / 305 | 122px (凪 NAGI) | none |
-| 1194×834 | 1078×718 | 323 / 303 / 303 | 116px (苺 ICHIGO) | none |
-| 1024×1366 | 884×1226 | 367 / 367 | 275px (深 SHIN) | none |
-| 1024×768 | 908×652 | 293 / 240 / 240 | 44px (透 TŌ), 57px (深 SHIN) | none |
-| 768×1024 | 652×908 | 284 / 284 | 168px (雲 KUMO) | none |
+| 1366×1024 | 1226×884 | 56 | wide, roomy — 398 / 305 / 305 | 80px (透 TŌ) |
+| 1194×834 | 1078×718 | 37 | wide, roomy | 60px (透 TŌ) |
+| 1024×768 | 908×652 | 30 | wide, roomy | 41px (透 TŌ), 54px (深 SHIN) |
+| 1440×900 | 1324×784 | 45 | wide, roomy | 79px (透 TŌ) |
+| 1024×1366 | 884×1226 | 56 | tall, roomy — 367 / 367 | 296px (透 TŌ) |
+| 834×1194 | 718×1078 | 37 | tall, roomy | 222px (深 SHIN) |
+| 768×1024 | 652×908 | 30 | tall, roomy | 86px (深 SHIN) |
+| 900×680 | 784×564 | 16 | wide, tight | 232px (深 SHIN) |
+| 852×393 | 852×393 | 16 | wide, tight — 224 / 324 / 199 | 61px (深 SHIN) |
+| 393×852 | 393×852 | 16 | tall, tight — one 361 column | 52px (深 SHIN) |
 
-Checked with the drinks that stress each axis rather than with NAGI: 透 TŌ has five method steps,
-深 SHIN has five build rows *and* the two longest steps, 雲 KUMO has the longest footer
-(`雲 — cloud, drifting white · HOT ON FROZEN · matcha base 75–80 °C`, one line at 768px), 翠 SUI has
-only two build rows and does not read as stranded. Exactly one line of copy wraps anywhere in the
-collection: 深 SHIN's `loosen the sesame with kuromitsu`, at 1024×768, by five pixels.
+Slack is the distance from the deepest text box in the body to the body's own bottom edge. The
+stress cases are the drinks that own an axis rather than NAGI: 透 TŌ has five method steps, 深 SHIN
+has five build rows *and* the two longest steps, 雲 KUMO has the longest footer, 翠 SUI has only two
+build rows and does not read as stranded.
 
-Text widths were not estimated. Both subset `.woff2` files load in PIL, so every quantity, label,
-step and footer line was measured at its real size and weight — including the letterspacing, which
-adds `0.30em × (n−1)` to a ten-pixel label and is most of its width.
+Both masters were re-measured element by element after the restructure. Every structural number is
+identical — the hairline frame at `x 56→1310`, the paper at `70→1296`, the 1114×772 content box,
+the 398² render well, the 305px landscape columns, the 367px portrait ones. Moving from
+`grid-template-areas` to source-order auto-placement, which is what lets the tight cases use
+`display: contents`, cost nothing.
+
+Four numbers moved by 4px or less, and the table above now carries the live values rather than the
+harness's: the rule under the method list `439 → 443` (reference 452), the extremes line
+`679 → 683` (684), method step pitch `44.5 → 44.7` (45) — all three closer to the reference — and
+the footer rule `849 → 853` (841), 4px further. The differences are the harness's, not a
+regression: it rendered the paper without a dialog around it, and it is now retired.
 
 ### Three things the reference and the docs disagreed about
 
@@ -135,11 +330,19 @@ adds `0.30em × (n−1)` to a ten-pixel label and is most of its width.
 
 ### Traps that cost real time
 
-- **A regex over string literals is not a Tailwind scanner.** The verification harness first
-  extracted candidate classes with a quoted-string regex; every apostrophe in a doc comment
-  ("Base UI's", "the panel's") opened a phantom string that swallowed the real `className` after
-  it. The result was a page missing exactly the classes with parentheses in them, which looked like
-  a Tailwind arbitrary-value bug and was not. `Scanner` from `@tailwindcss/oxide` is right there.
+- **Tailwind cannot generate a class it never sees written out.** These container-query variants are
+  long enough that composing them (`WIDE + 'grid-cols-…'`, or a small `v(variant, classes)` helper)
+  is the obvious tidy-up. It silently produces nothing: the scanner matches complete literals in the
+  source, so the variant string and the utility string are found separately and the combined
+  candidate never exists. Repeat the whole thing on every line.
+- **A regex over string literals is not a Tailwind scanner.** The earlier static harness extracted
+  candidate classes with a quoted-string regex; every apostrophe in a doc comment ("Base UI's",
+  "the panel's") opened a phantom string that swallowed the real `className` after it. The result
+  was a page missing exactly the classes with parentheses in them, which looked like a Tailwind
+  arbitrary-value bug and was not. `Scanner` from `@tailwindcss/oxide` is right there.
+- **A `display: none` element's rect is all zeros at the viewport origin**, which reads as a box
+  escaping the top-left of anything you are checking against. The tight arrangements hide the
+  render, and the overflow checker reported a phantom 16px breach until it skipped zero-size boxes.
 - **`untrack` on a full-width block does nothing but push the box out.** Trailing-space
   compensation is for runs that align to a right edge or sit beside an icon. On the left-aligned
   build labels it pushed each `<p>` three pixels past its column — invisible, but it was the only
@@ -162,6 +365,14 @@ adds `0.30em × (n−1)` to a ten-pixel label and is most of its width.
 - **A value of 10 hangs 5px past the content margin.** The diamond centres on the end tick, and
   half of a rotated 7px square is 5px. Only 雲 KUMO's 乳 CREAM reaches it. Insetting the track would
   stop the marker sitting on the tick it is reporting, which is worse; left as is.
+- **The compact panel has no scrim and no frame.** It fills the viewport, so the darkened field
+  behind it is never visible and the hairline frame has nothing to register against. That is the
+  price of fitting the content, and on a phone a recipe that takes the screen is the right shape
+  anyway — but it does mean the overlay reads as a sheet rather than as a print at those sizes.
+- **The 14px inset is one value now.** It was written twice in two syntaxes in the same file — `+
+  14px` inside four `calc()`s and `-inset-3.5` on the hairline frame — which had to stay equal and
+  would not have been changed together. Both read `--recipe-frame`, set once on the popup, which is
+  also what lets compact take it to `0px`.
 
 ## Question
 

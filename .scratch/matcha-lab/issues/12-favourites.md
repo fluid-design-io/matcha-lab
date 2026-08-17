@@ -10,6 +10,22 @@ The store from [Data layer](./04-data-layer.md) needed nothing changed — it al
 effect, already wrote through on every toggle, and already read before it subscribed. What was
 missing was a control, and proof.
 
+### The control was unreachable, and the tests could not have caught it
+
+The first pass built the toggle and proved the *store*, and both were correct. The **control** was
+not: the recipe overlay had no `z-index`, `LabShell` is `relative z-10`, and a positive z beats tree
+order, so the app shell hit-tested above the whole dialog. `document.elementFromPoint` at the centre
+of this button returned the rail's `<nav>`. This app's only favourite control could not be pressed
+by a finger at any viewport, and nothing in the ticket's evidence said so, because unit tests
+against a store cannot see a stacking context and the toggle was never driven through a real
+pointer.
+
+Fixed in [Recipe overlay](./11-recipe-overlay.md) — the popup and the backdrop are `z-20` above the
+shell's `z-10`. Re-verified here as an interaction rather than as a store call: a real pointer click
+on the button at its measured centre flips `aria-pressed` from `true` to `false`, swaps the label
+from `SAVED` to `SAVE`, rewrites `matcha-lab:favourites` in `localStorage`, and leaves the panel
+open. **Drive the control, not the hook** — that is the gap this ticket had.
+
 ### The toggle
 
 `src/screens/lab/recipe/recipe.favourite.tsx`, bottom right of the recipe panel's footer. It reads
@@ -72,8 +88,16 @@ title block violates "the title block may not gain a CTA button". Recommendation
 the recipe is one tap, the panel is where the drink is actually being considered, and the masthead
 count already reflects the change the moment it happens.
 
-`lab.masthead.tsx` and `lab.footer.tsx` belong to another stream this run, so this is a
-recommendation rather than a change either way.
+`lab.masthead.tsx` and `lab.footer.tsx` belong to another stream, so this is a recommendation rather
+than a change either way. It still stands after the overlay fix: the panel toggle now works, which
+is the argument's premise, not a reason to add a second one.
+
+### One thing that moved
+
+At compact viewports the recipe panel drops the render and fills the screen, but the footer and its
+toggle are unchanged — the favourite is reachable at every size, including 852×393 and 393×852,
+confirmed by the same hit-test grid. The `SAVE`/`SAVED` label keeps its fixed 48px right-aligned box
+there too, so the heart does not step sideways on a phone either.
 
 ## Question
 

@@ -11,13 +11,9 @@ import {
 /**
  * `味 TASTING NOTE` — the five axes as horizontal scales, and the derived extremes line.
  *
- * Unlike `材料` and `手順` this heading has no slash and its kanji sits at full ink, because 味 is
- * the first row of the axis stack rather than a label floating above it: 味 椰 乳 力 涼 濃 share one
- * column down the left, which is exactly how the reference sets it.
- *
- * Both derivations come from `#/domain/drinks` and are never recomputed here — `leadsCollection`
- * fills the diamond and `collectionExtremes` writes the sentence. That is the whole reason the
- * sentence cannot go stale when an axis value changes.
+ * 味 椰 乳 力 涼 濃 share one column down the left, which is why 味 sets at full ink and without a
+ * slash. `leadsCollection` and `collectionExtremes` are never recomputed here, so neither the
+ * filled diamonds nor the sentence can go stale when an axis value changes.
  */
 export function RecipeTasting({ drink }: { drink: Drink }) {
   const { highest, lowest } = collectionExtremes(drink)
@@ -69,12 +65,8 @@ export function RecipeTasting({ drink }: { drink: Drink }) {
  * One 0–10 scale: a hairline with a tick at each end and one at the midpoint, and a 7px diamond at
  * `value / 10` along it.
  *
- * The diamond is accent-filled when the drink holds the collection's high on that axis and hollow
- * otherwise — the fill is state, not decoration, which is the only licence the accent has.
- *
- * The reference mockup draws its middle tick at 25% and its markers at positions that no longer
- * match the shipped axis values; it predates the content. `docs/design/layout-geometry.md` is the
- * contract, and it says midpoint and `value / 10`.
+ * Accent-filled when the drink holds the collection's high on that axis, hollow otherwise — the
+ * fill is state, which is the only licence the accent has.
  */
 function AxisScale({ value, leads }: { value: AxisValue; leads: boolean }) {
   return (
