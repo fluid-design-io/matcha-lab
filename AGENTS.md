@@ -19,7 +19,6 @@ src/
   components/       shared, multi-part UI. Compound folders with one public namespace
   domain/           content and state, no React components
     drinks/         the nine records + derivations over the collection
-    favourites/     the one thing that persists
   screens/          route-bound modules; `lab/` is the only route surface
   routes/           thin TanStack Router wrappers — no orchestration
   lib/              helpers with a proven second consumer

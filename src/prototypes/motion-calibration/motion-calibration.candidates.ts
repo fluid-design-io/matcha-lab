@@ -68,7 +68,7 @@ export const CANDIDATES: readonly Candidate[] = [
   {
     key: 'D',
     name: 'Too much, on purpose',
-    claim: 'The bracket. If this is the favourite, the whole brief has moved.',
+    claim: 'The bracket. If this is preferred, the whole brief has moved.',
     tokens: {
       stagger: 0.085,
       layer: { visualDuration: 0.58, bounce: 0.16 },

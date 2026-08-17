@@ -3,9 +3,8 @@ import type { Drink, DrinkId } from '#/domain/drinks'
 /**
  * The lab's in-memory state contract.
  *
- * Selection and whether the recipe is open are ordinary session state — they do not persist and
- * they never touch storage. Favourites are the only thing that outlives the session, and they
- * live in `#/domain/favourites`.
+ * Selection and whether the recipe is open are ordinary session state — they do not persist or
+ * touch storage.
  */
 export type LabContextValue = {
   readonly drink: Drink

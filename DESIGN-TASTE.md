@@ -52,7 +52,7 @@ never reach for a hue name in a component.
 | `--color-paper` | `#F1ECDF` | Rice paper. The recipe panel, and the ink colour for everything drawn *on* the field. |
 | `--color-paper-shade` | `#E8E3D8` | Recessed paper. The recipe panel's render well **while it is empty** — the render itself is opaque and covers it, so nothing else ever sees this. |
 | `--color-ink` | `#1F271C` | Green-black. Type on paper. Never on the field. |
-| `--color-accent` | `#A8C4D6` | The pale blue. Rail underline, axis markers, step numbers, the saved heart, the masthead tick. |
+| `--color-accent` | `#A8C4D6` | The pale blue. Rail underline, axis markers, step numbers, the masthead tick. |
 
 The accent is the only colour in the app that is not green, off-white, or black. It marks
 **selection and state, never decoration.** If a blue line is not saying "this one" or "this is
@@ -66,7 +66,7 @@ never a raw alpha.
 | Token | Paper at | Carries |
 | --- | --- | --- |
 | `--color-on-field` | 100% | Drink title. The one thing at full strength. |
-| `--color-on-field-strong` | 88% | Masthead kanji, `作り方`, the selected rail kanji, the favourite count. |
+| `--color-on-field-strong` | 88% | Masthead kanji, `作り方`, the selected rail kanji. |
 | `--color-on-field-muted` | 62% | Micro-labels: `MATCHA LAB`, `RECIPE →`, romaji. |
 | `--color-on-field-faint` | 46% | Ingredient line, kanji gloss, unselected rail kanji. |
 | `--color-on-field-ghost` | 14% | The giant watermark kanji. Measured off the reference; do not raise it. |
@@ -84,7 +84,7 @@ rule exists to stop. Revisit only if a second field-side frame ever appears.
 | Token | Ink at | Carries |
 | --- | --- | --- |
 | `--color-on-paper` | 100% | Quantities, method steps, the drink name, header kanji. |
-| `--color-on-paper-muted` | 58% | Micro-labels: `材料 / BUILD`, `MATCHA BASE`, axis names, `SAVED`. |
+| `--color-on-paper-muted` | 58% | Micro-labels: `材料 / BUILD`, `MATCHA BASE`, axis names. |
 | `--color-on-paper-faint` | 38% | Footer gloss, the derived extremes line. |
 | `--color-hairline` | 20% | Section rules, axis scales, the panel's inset frame. |
 
@@ -165,9 +165,8 @@ compact number, change the multiplier — the column below is derived, not autho
 | `--text-name` | English name in the overlay header | `0.875rem` / 14px | 13px | 400 | `0` | Latin |
 | `--text-detail` | Ingredient line, kanji gloss, footer | `0.6875rem` / 11px | 10px | 400 | `0.06em` | Latin |
 | `--text-romaji` | `NAGI` beside a kanji | `0.6875rem` / 11px | 10px | 500 | `0.26em` | Latin |
-| `--text-label` | `MATCHA LAB`, `RECIPE →`, `BUILD`, `SAVED` | `0.625rem` / 10px | 9px | 500 | `0.30em` | Latin |
+| `--text-label` | `MATCHA LAB`, `RECIPE →`, `BUILD` | `0.625rem` / 10px | 9px | 500 | `0.30em` | Latin |
 | `--text-micro` | Axis names, step numbers, rail romaji | `0.5625rem` / 9px | 9px | 500 | `0.18em` | Latin |
-| `--text-numeral` | Favourite count | `0.6875rem` / 11px | 10px | 400 | `0.18em` | Latin, `tnum` |
 
 ¹ Not a `--text-*` token, because it is orientation-dependent rather than density-dependent: `44svh`
 in landscape, `28svw` in portrait, `34svw` at compact, where one stacked composition serves the
@@ -190,8 +189,7 @@ by 40px, which is more than enough to send you correcting in the wrong direction
   `margin-right: -0.30em` (matching its tracking).
 - **`font-optical-sizing: none`** globally. Both faces are variable; letting the browser pick an
   optical size makes the 9px labels and the 450px watermark drift apart between engines.
-- **Tabular figures** (`font-variant-numeric: tabular-nums`) for the favourite count, step
-  numbers, and every quantity. A counter that shifts width from `09` to `10` is a bug.
+- **Tabular figures** (`font-variant-numeric: tabular-nums`) for step numbers and every quantity.
 - **Never bold.** The heaviest weight in the app is 500, and it appears only under 11px. The
   large sizes are 200–300. Weight is not how this design creates emphasis; size and opacity are.
 
@@ -287,10 +285,8 @@ Fixed regardless of calibration:
 - **Only animate `opacity`, `transform`, and `filter`.** Nothing that triggers layout. The one
   exception is the shared rail underline, where Motion's `layout` prop reads and inverts the
   layout itself.
-- **The favourite toggle is louder than everything else**, and it is the only thing that is.
-  See [Components](#6-components).
-- **Nothing animates on mount** except the field canvas fading in over the flat `#7B8F63` body
-  and the favourite count settling after hydration. First paint is a still frame.
+- **Nothing animates on mount** except the field canvas fading in over the flat `#7B8F63` body.
+  First paint is a still frame.
 
 ### 5. Icons
 
@@ -311,12 +307,10 @@ the only lever for weight.
 **Only use box sizes 12, 16, or 20px** — halves and multiples of the 16 grid land on whole pixels
 and stay crisp. `13px` and `18px` produce a soft, slightly grey glyph.
 
-The app needs four icons. That is the whole list:
+The app needs two icons. That is the whole list:
 
 | Use | Icon | Box | Effective stroke | Pairing |
 | --- | --- | --- | --- | --- |
-| Favourite count, header | `Heart` | 12px | 1.13px | Beside `--text-numeral`. Matches the hairline weight. |
-| Favourite toggle, recipe overlay | `Heart` ×2 + `HeartFill` | 12px | — | Three glyphs stacked in one box — resting outline, accent outline, accent fill — so the state change is `opacity` only. Beside `--text-label` `SAVE` / `SAVED`. |
 | Close the recipe overlay | `Xmark` | 16px | 1.5px | Standalone. 44px hit area, invisible. |
 | Empty / loading render frame | `Picture` | 20px | 1.88px | Above an 11px caption, inside the dashed frame. |
 
@@ -437,16 +431,6 @@ is a mistake.
   and the render is the one that goes: it is the largest of them, and the only one repeating what
   the stage was showing a tap ago. Restoring it at phone sizes brings the scrollbar back.
 - No nested scrolling, at any target viewport, ever.
-
-#### The favourite toggle
-
-The most tactile moment in the app and the only place the brief's *slightly playful* note is
-allowed to land. It gets **more life than anything else** — a quick scale overshoot on the heart
-and the accent arriving a beat before the fill — and it is still restrained: under 400ms, under
-1.15× scale, no particles, no confetti, no colour outside the accent.
-
-The header count `♡ 02` fades in after hydration rather than popping. It must read as
-*settling*, not *flickering*.
 
 ### 7. Content voice
 

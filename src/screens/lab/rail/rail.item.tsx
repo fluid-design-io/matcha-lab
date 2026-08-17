@@ -72,8 +72,7 @@ export function RailItem({ drink, selected, onSelect }: RailItemProps) {
           animate={{ scale: selected ? 1 : UNSELECTED_SCALE }}
           transition={railSpring}
         >
-          {/* The two roles stacked in one cell and cross-faded, which is how this app changes a
-              colour without animating `color` — the same trick as the favourite heart. Both copies
+          {/* The two roles stacked in one cell and cross-faded avoid animating `color`. Both copies
               carry the selected weight: the smaller token is 250 against 300, and weight is not
               what this design changes on selection. */}
           <motion.span

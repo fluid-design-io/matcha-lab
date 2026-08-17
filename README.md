@@ -4,10 +4,10 @@ Nine matcha drinks, one at a time, on a living field of muted matcha green. An a
 single-viewport iPad web app: nothing scrolls, nothing stacks, and the only things that move are
 the things you touched.
 
-Built with TanStack Start in SPA mode, TanStack Router, TanStack Store, Tailwind v4, Base UI,
-Motion, Gravity UI icons, and TypeGPU for the WebGPU field. Both typefaces are subset and
-self-hosted from `src/assets/fonts/`, so it launches from a cold cache with no network. It installs
-to the iPad home screen and runs standalone.
+Built with TanStack Start in SPA mode, TanStack Router, Tailwind v4, Base UI, Motion, Gravity UI
+icons, and TypeGPU for the WebGPU field. Both typefaces are subset and self-hosted from
+`src/assets/fonts/`, so it launches from a cold cache with no network. It installs to the iPad home
+screen and runs standalone.
 
 ## Getting started
 

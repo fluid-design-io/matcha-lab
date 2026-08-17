@@ -141,10 +141,6 @@
   --text-label--font-weight: 500;
   --text-label--letter-spacing: 0.3em;
 
-  --text-numeral: calc(0.6875rem * var(--type-micro));
-  --text-numeral--line-height: 1;
-  --text-numeral--font-weight: 400;
-  --text-numeral--letter-spacing: 0.18em;
 
   --text-micro: 0.5625rem;
   --text-micro--line-height: 1;

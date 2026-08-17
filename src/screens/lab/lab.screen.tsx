@@ -1,5 +1,4 @@
 import { MatchaField } from '#/components/matcha-field'
-import { useFavouritesPersistence } from '#/domain/favourites'
 
 import { LabProvider } from './lab.context'
 import { LabFooter } from './lab.footer'
@@ -11,8 +10,6 @@ import { RecipeOverlay } from './recipe'
 
 /** The one route surface. NAGI opens. */
 export function LabScreen() {
-  useFavouritesPersistence()
-
   return (
     <LabProvider>
       <MatchaField />

@@ -77,8 +77,8 @@ grid-template-columns: 1fr var(--rail-w);
 grid-template-rows:    auto 1fr auto;      /* masthead / stage / footer */
 ```
 
-The masthead spans both columns (favourite count sits in the right one). The rail occupies
-column 2 across all three rows and centres itself vertically. The stage cell is
+The masthead spans both columns. The rail occupies column 2 across all three rows and centres
+itself vertically. The stage cell is
 `position: relative` and holds the watermark and the render frame as absolutely-positioned
 children, so neither can push the footer.
 
@@ -167,7 +167,6 @@ landscape numbers are untouched; there the stage is the short axis and has nothi
 | Masthead tick (accent hairline) | `x=56`, `y 0→120`, 1px | `left: var(--edge); top: 0; height: calc(var(--edge) + 64px)` |
 | 抹茶 | `x=61`, cap 16px | Masthead row, `padding-left: 10px` off the tick |
 | `MATCHA LAB` | `x=119`, baseline `y≈75` | `margin-left: 22px` from 抹茶 |
-| Favourite count `♡ 02` | right-aligned, `y 60→71` | Masthead row, column 2 |
 | Watermark kanji | ink `x 135→570`, `y 320→695` | `font-size: 44svh`; em box `left: 6svw`, vertically centred |
 | Render frame | `495×495` at centre `(905, 474.5)` | `min(48svh, 38svw)`, centred at `66%` / `46.5%` of the stage |
 | Title romaji | `x 59→100`, `y 872→882` | Footer, column 1 |
@@ -200,7 +199,6 @@ Derived sizes at the other landscape viewports:
 | Edge margin | 56px | `--edge` |
 | 抹茶 | `x=55`, `y 58→74` | Masthead, row 1 |
 | `MATCHA LAB` | `x=55`, `y≈95` | Beneath 抹茶, not beside it — the masthead stacks in portrait |
-| Favourite count | right, `y≈69` | Masthead, right-aligned |
 | Watermark kanji | ink `x 375→650`, `y 175→425` | `font-size: 28svw`, horizontally centred, top-anchored to the stage |
 | Render frame | `598×598` at `x 212→811`, `y 302→900` | `min(72.5svw, 55svh)`, horizontally centred — the measurement × 1.25, see [the stage's two sizes](#the-stages-two-sizes) |
 | Title romaji | `y≈1104` | Footer |
@@ -298,7 +296,7 @@ column-gap: 53px;
 | Middle column | `x 578`, width 302 | `材料 / BUILD` — each ingredient as a micro-label above a 30px/300 quantity |
 | Right column | `x 933→1240` | `手順 / METHOD` — numbered steps; rule at `y≈452`; `味 TASTING NOTE`; the five axes; the derived extremes line at `y≈684` |
 | Footer rule | `y≈840`, `x 126→1240` | `--color-hairline` |
-| Footer | `y 898→914` | Gloss + base temperature left, `♥ SAVED` right |
+| Footer | `y 898→914` | Gloss, serve temperature, and matcha base |
 
 Axis scale geometry: glyph at `x 936` (14px kanji), axis name at `x 967` (9px micro), the scale
 line from `x 1040` to `x 1240` with a tick at each end and one at the midpoint, and a 7px diamond

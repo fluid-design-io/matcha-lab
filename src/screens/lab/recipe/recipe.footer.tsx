@@ -1,10 +1,7 @@
 import { MATCHA_BASE, SERVE_LABEL, type Drink } from '#/domain/drinks'
 
-import { RecipeFavourite } from './recipe.favourite'
-
 /**
- * The metadata band: what the kanji means, how it is served, what the shared base is, and the one
- * control in the panel that changes anything.
+ * The metadata band: what the kanji means, how it is served, and what the shared base is.
  *
  * This is the only place the gloss survives a rotation — the main view's title block drops it in
  * portrait.
@@ -14,7 +11,7 @@ export function RecipeFooter({ drink }: { drink: Drink }) {
     <footer className="mt-(--recipe-lead) shrink-0">
       <span aria-hidden className="block h-px w-full bg-hairline" />
 
-      <div className="mt-(--recipe-lead) flex items-center justify-between gap-6">
+      <div className="mt-(--recipe-lead)">
         <p className="text-detail min-w-0 text-on-paper-faint">
           <span className="font-jp">{drink.kanji}</span>
           {' — '}
@@ -26,8 +23,6 @@ export function RecipeFooter({ drink }: { drink: Drink }) {
           <span className="px-2.5">·</span>
           matcha base {MATCHA_BASE.temperature}
         </p>
-
-        <RecipeFavourite drink={drink} />
       </div>
     </footer>
   )
