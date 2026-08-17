@@ -1,0 +1,21 @@
+# Vercel builds from source; the build output is produced on their side.
+.output
+.nitro
+.tanstack
+.vinxi
+node_modules
+
+# Agent/session scratch and the render pipeline's intermediates. `.scratch/` in particular
+# carries tracked PNG reference sheets that would otherwise be uploaded on every deploy.
+.scratch
+.render-work
+.agents
+.claude
+.vscode
+.fontenv
+
+# Docs and design notes are not build inputs. Root-scoped on purpose: a bare `*.md` would also
+# match anything under src/, and this repo has @tanstack/markdown on hand — content added there
+# later would vanish from the deploy without failing the build.
+docs
+/*.md

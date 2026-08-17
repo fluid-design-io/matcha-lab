@@ -12,7 +12,7 @@ eyeballed. Every number below is the rendered result versus the reference:
 | Element | Built | Reference |
 | --- | --- | --- |
 | Masthead accent tick | `x 56`, `y 0→120` | `x 56`, `y 0→120` |
-| `MATCHA COCONUT LAB` | `x 120→291` | `x 119→292` |
+| `MATCHA LAB` | `x 120→291` | `x 119→292` |
 | Watermark ink | `y 317→695` | `y 320→695` |
 | Render frame | `658→1150`, `230→721` (492²) | `658→1152`, `227→722` (495²) |
 | Drink title | `y 904→940`, 36px/300 | ink `y 905→931` |
@@ -52,7 +52,7 @@ Build the 1366×1024 landscape view — reference 4 is the master. Static compos
 
 Elements, per the reference:
 
-- **Header**, top left: 抹茶 + `MATCHA COCONUT LAB` micro-label. Favourite counter top right (`♡ 02`).
+- **Header**, top left: 抹茶 + `MATCHA LAB` micro-label. Favourite counter top right (`♡ 02`).
 - **Giant watermark kanji** — the selected drink's character at enormous scale, low contrast, bleeding off the left edge. This is the atmosphere; get its scale, opacity and crop right.
 - **Render frame** — centred square, sized off the smaller viewport axis, holding the drink image. Dashed border survives as the empty/loading state only.
 - **Title block**, bottom left: romaji label, drink name at large weight-300 scale, ingredient line + kanji gloss beneath at micro scale.

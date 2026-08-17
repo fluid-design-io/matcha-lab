@@ -67,7 +67,7 @@ never a raw alpha.
 | --- | --- | --- |
 | `--color-on-field` | 100% | Drink title. The one thing at full strength. |
 | `--color-on-field-strong` | 88% | Masthead kanji, `作り方`, the selected rail kanji, the favourite count. |
-| `--color-on-field-muted` | 62% | Micro-labels: `MATCHA COCONUT LAB`, `RECIPE →`, romaji. |
+| `--color-on-field-muted` | 62% | Micro-labels: `MATCHA LAB`, `RECIPE →`, romaji. |
 | `--color-on-field-faint` | 46% | Ingredient line, kanji gloss, unselected rail kanji. |
 | `--color-on-field-ghost` | 14% | The giant watermark kanji. Measured off the reference; do not raise it. |
 | `--color-hairline-field` | 22% | Rules and the dashed empty-state frame on the field. |
@@ -165,7 +165,7 @@ compact number, change the multiplier — the column below is derived, not autho
 | `--text-name` | English name in the overlay header | `0.875rem` / 14px | 13px | 400 | `0` | Latin |
 | `--text-detail` | Ingredient line, kanji gloss, footer | `0.6875rem` / 11px | 10px | 400 | `0.06em` | Latin |
 | `--text-romaji` | `NAGI` beside a kanji | `0.6875rem` / 11px | 10px | 500 | `0.26em` | Latin |
-| `--text-label` | `MATCHA COCONUT LAB`, `RECIPE →`, `BUILD`, `SAVED` | `0.625rem` / 10px | 9px | 500 | `0.30em` | Latin |
+| `--text-label` | `MATCHA LAB`, `RECIPE →`, `BUILD`, `SAVED` | `0.625rem` / 10px | 9px | 500 | `0.30em` | Latin |
 | `--text-micro` | Axis names, step numbers, rail romaji | `0.5625rem` / 9px | 9px | 500 | `0.18em` | Latin |
 | `--text-numeral` | Favourite count | `0.6875rem` / 11px | 10px | 400 | `0.18em` | Latin, `tnum` |
 
@@ -343,7 +343,7 @@ What each may and may not do. Anything not listed is not allowed to appear.
 
 #### The masthead
 
-抹茶 at `--text-kanji-sm`, then `MATCHA COCONUT LAB` at `--text-label` — on one line in landscape,
+抹茶 at `--text-kanji-sm`, then `MATCHA LAB` at `--text-label` — on one line in landscape,
 stacked everywhere else, per the references.
 
 **In landscape only,** a 1px accent hairline drops from the very top edge of the viewport down past

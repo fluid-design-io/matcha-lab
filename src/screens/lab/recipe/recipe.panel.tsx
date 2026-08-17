@@ -18,7 +18,8 @@ export function RecipePanel({ drink }: { drink: Drink }) {
     <div
       className={cn(
         'absolute inset-0 flex flex-col overflow-hidden bg-paper',
-        'before:absolute before:inset-0 before:bg-linear-to-br before:from-scrim/15 before:to-transparent before:pointer-events-none',
+        'grain',
+        'after:absolute after:inset-0 after:bg-linear-to-br after:from-scrim/15 after:to-transparent after:pointer-events-none',
         // The one shadow in the app, lifting the paper off the field.
         '[box-shadow:0_40px_120px_-40px_oklch(from_var(--color-field-deep)_0.22_c_h/0.5)]',
         // Padding tracks the panel's *short* axis, so a panel short on one axis does not spend that

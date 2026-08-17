@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 
-import { dissolve, useMotionTokens, type MotionLayer } from '#/lib/motion'
+import {
+  dissolve,
+  useMotionTokens,
+  type DissolveVariants,
+  type MotionLayer,
+} from '#/lib/motion'
 import { cn } from '#/lib/utils'
 
 import { useLab } from './lab.context'
@@ -14,6 +19,11 @@ type LabLayerProps = {
    * it, because only the two slots whose selection changed have anything to dissolve.
    */
   layerKey?: string
+  /**
+   * What the layer dissolves on. Defaults to `dissolve(layer)`; the title passes `rollDissolve`,
+   * because its letters do the leaving and arriving and a fade over the top of them only hides it.
+   */
+  variants?: DissolveVariants
   /** Positioning and sizing for the layer as a whole. The copies inside inherit it. */
   className?: string
   children: ReactNode
@@ -25,10 +35,16 @@ type LabLayerProps = {
  * come from `useMotionTokens()`, which covers everything a spring can be shrunk to — a Motion
  * `layout` animation is out of its reach and `LabProvider`'s `MotionConfig` handles that instead.
  */
-export function LabLayer({ layer, layerKey, className, children }: LabLayerProps) {
+export function LabLayer({
+  layer,
+  layerKey,
+  variants: variantsOverride,
+  className,
+  children,
+}: LabLayerProps) {
   const { drink } = useLab()
   const tokens = useMotionTokens()
-  const variants = dissolve(layer, tokens)
+  const variants = variantsOverride ?? dissolve(layer, tokens)
 
   return (
     <div className={cn('grid', className)}>

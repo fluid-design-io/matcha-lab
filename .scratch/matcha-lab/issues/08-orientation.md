@@ -99,7 +99,7 @@ sum of the tokens above resolved at 1024×1366.
 | Element | Computed | `ref-1-portrait.png` |
 | --- | --- | --- |
 | Masthead 抹茶 box | `y 56→72` | `y 58→74` |
-| `MATCHA COCONUT LAB` box | `y 84→94` | baseline `y≈95` |
+| `MATCHA LAB` box | `y 84→94` | baseline `y≈95` |
 | Watermark ink | `y 178→429` | `y 175→425` |
 | Render frame | `301→896`, 594² | `302→900`, 598² |
 | Title romaji box | top `1103` | `y≈1104` |

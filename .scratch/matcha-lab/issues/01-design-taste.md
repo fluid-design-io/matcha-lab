@@ -47,7 +47,7 @@ Author `DESIGN-TASTE.md` at the repo root — the file future agents read to sha
 **Part 1 — the code-facing design system.** What any agent touching UI must obey:
 
 - Colour tokens. The `#7B8F63` field, rice-paper surfaces, green-black ink, and the pale blue accent visible in the reference mockups (rail underline, tasting-axis markers, the ♥ SAVED mark). Name them semantically, not by hue.
-- Type scale. Noto Sans JP leads and carries kanji and Japanese labels; a neutral grotesque carries romanization and English at *much* smaller sizes, letterspaced. Pin the actual sizes, weights and tracking for: giant watermark kanji, drink title, rail kanji, romaji, micro-labels (`MATCHA COCONUT LAB`, `RECIPE →`, axis names), and numerals.
+- Type scale. Noto Sans JP leads and carries kanji and Japanese labels; a neutral grotesque carries romanization and English at *much* smaller sizes, letterspaced. Pin the actual sizes, weights and tracking for: giant watermark kanji, drink title, rail kanji, romaji, micro-labels (`MATCHA LAB`, `RECIPE →`, axis names), and numerals.
 - Spacing and layout rules. The single-viewport constraint, safe-area handling, the centred square render frame, edge margins at each target viewport.
 - Motion timings. Durations, springs, and stagger offsets, expressed as tokens. The standing rule is *extremely subtle* — noticeable only under attention.
 - Component rules: what the rail, the render frame, the title block, and overlays may and may not do.

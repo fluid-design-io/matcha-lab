@@ -181,7 +181,7 @@ Measured, not eyeballed. Roomy against compact, against the design table:
 | Rail kanji, unselected | 24 px | 20.16 px | 24 / 20 |
 | `--text-kanji-sm` | 16 px | 14.72 px | 16 / 15 |
 | Detail, romaji | 11 px | 10.12 px | 11 / 10 |
-| `MATCHA COCONUT LAB` | 10 px, `3px` | 9.2 px, `2.76px` | 10 / 9 at `0.30em` |
+| `MATCHA LAB` | 10 px, `3px` | 9.2 px, `2.76px` | 10 / 9 at `0.30em` |
 | Rail romaji, step numbers | 9 px, `1.62px` | 9 px, `1.62px` | 9 at `0.18em`, unscaled |
 
 Micro-labels stay legible: nothing lands below 9 px, `--text-micro` does not scale, and the 9 px
@@ -209,7 +209,7 @@ exactly. The `<img>` is `object-contain` on a 2048×2048 source, so it cannot be
 crop.
 
 Everything else lands on the reference too, at the 1366×1024 master: masthead tick 1×120 px at
-`x = 56`, `MATCHA COCONUT LAB` at `x = 120` (`119` measured off the mockup), title romaji baseline
+`x = 56`, `MATCHA LAB` at `x = 120` (`119` measured off the mockup), title romaji baseline
 at `y = 879` (`872`), 作り方 at `x = 1035` (`1035`), `RECIPE →` at `x = 1102` (`1104`), rail column
 `x 1172→1310`, kanji centres on `x = 1259`, pitch 73. And at the 1024×1366 portrait master: rule
 above the rail at `y = 1233` spanning `x 56→968`, band `1233→1320`, glyph centres `y ≈ 1289`, romaji

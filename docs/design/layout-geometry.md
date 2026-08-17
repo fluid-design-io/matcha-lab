@@ -166,7 +166,7 @@ landscape numbers are untouched; there the stage is the short axis and has nothi
 | Edge margin | 56px | `--edge` |
 | Masthead tick (accent hairline) | `x=56`, `y 0→120`, 1px | `left: var(--edge); top: 0; height: calc(var(--edge) + 64px)` |
 | 抹茶 | `x=61`, cap 16px | Masthead row, `padding-left: 10px` off the tick |
-| `MATCHA COCONUT LAB` | `x=119`, baseline `y≈75` | `margin-left: 22px` from 抹茶 |
+| `MATCHA LAB` | `x=119`, baseline `y≈75` | `margin-left: 22px` from 抹茶 |
 | Favourite count `♡ 02` | right-aligned, `y 60→71` | Masthead row, column 2 |
 | Watermark kanji | ink `x 135→570`, `y 320→695` | `font-size: 44svh`; em box `left: 6svw`, vertically centred |
 | Render frame | `495×495` at centre `(905, 474.5)` | `min(48svh, 38svw)`, centred at `66%` / `46.5%` of the stage |
@@ -199,7 +199,7 @@ Derived sizes at the other landscape viewports:
 | --- | --- | --- |
 | Edge margin | 56px | `--edge` |
 | 抹茶 | `x=55`, `y 58→74` | Masthead, row 1 |
-| `MATCHA COCONUT LAB` | `x=55`, `y≈95` | Beneath 抹茶, not beside it — the masthead stacks in portrait |
+| `MATCHA LAB` | `x=55`, `y≈95` | Beneath 抹茶, not beside it — the masthead stacks in portrait |
 | Favourite count | right, `y≈69` | Masthead, right-aligned |
 | Watermark kanji | ink `x 375→650`, `y 175→425` | `font-size: 28svw`, horizontally centred, top-anchored to the stage |
 | Render frame | `598×598` at `x 212→811`, `y 302→900` | `min(72.5svw, 55svh)`, horizontally centred — the measurement × 1.25, see [the stage's two sizes](#the-stages-two-sizes) |

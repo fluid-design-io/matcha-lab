@@ -36,6 +36,8 @@ export const Route = createRootRoute({
     links: [
       { rel: 'stylesheet', href: appCss },
       { rel: 'manifest', href: '/manifest.webmanifest' },
+      { rel: 'icon', href: '/icons/favicon-16.png', sizes: '16x16', type: 'image/png' },
+      { rel: 'icon', href: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' },
       { rel: 'apple-touch-icon', href: '/icons/icon-180.png' },
       // Preloaded rather than swapped: font-display is `block`, and 28 KB arriving early beats
       // a flash of the system CJK face at 450px.
