@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "react-composition-structure": {
+      "source": "fluid-design-io/react-composition-structure",
+      "sourceType": "github",
+      "skillPath": "skills/react-composition-structure/SKILL.md",
+      "computedHash": "cfab951d0cd755aa1a1dd777bb4625ee312b63ef016f2ad3bdeba6dd5b3aca9e"
+    },
+    "typegpu": {
+      "source": "software-mansion-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/typegpu/SKILL.md",
+      "computedHash": "d13ead73f47b890ea3e94e6b7f85d08412a7acf41f333da1f75341b8d5ea7b4e"
+    }
+  }
+}
