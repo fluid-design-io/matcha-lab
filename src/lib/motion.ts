@@ -59,11 +59,11 @@ export function layerDelay(layer: MotionLayer, tokens: MotionTokens): number {
 const MOTION: MotionTokens = {
   stagger: 0.04,
   layer: { visualDuration: 0.38, bounce: 0 },
-  watermark: { visualDuration: 1, bounce: 0 },
+  watermark: { visualDuration: 2, bounce: 0 },
   drift: 4,
-  watermarkDrift: 9,
+  watermarkDrift: 8,
   blur: 2,
-  watermarkBlur: 4,
+  watermarkBlur: 12,
 }
 
 /**

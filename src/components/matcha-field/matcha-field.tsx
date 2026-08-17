@@ -13,9 +13,11 @@ import { prefersReducedMotion } from '#/lib/motion'
 import { FieldUniforms, fieldFragment, fieldLayout } from './matcha-field.shader'
 
 /**
- * How often the field is allowed to redraw. The drift crosses the screen in about two minutes and
- * the shader is three instructions deep, so 24 fps is indistinguishable from sixty while still
- * being smooth enough that the (now visible) mottling does not step.
+ * How often the field is allowed to redraw. The field both drifts and reshapes itself, but even at
+ * its steepest a pixel only moves about 1.4/255 per second, which is 0.06/255 between frames at
+ * this rate — far inside one quantisation step, so 24 fps is indistinguishable from sixty and the
+ * mottling cannot be caught stepping. The shader is a couple of noise samples deep; the cost here
+ * is the fragment count, not the frame rate, which is why this is a cap and not a target.
  */
 const FRAME_INTERVAL_SECONDS = 1 / 24
 

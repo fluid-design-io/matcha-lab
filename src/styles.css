@@ -180,7 +180,10 @@
     --rail-row: var(--tap);
 
     --watermark-size: 34svw;
-    --frame-size: min(76svw, 40svh);
+
+    /* Portrait runs the render 25% larger than the reference master measures it — the stage has the
+     * height for it in every portrait case, and at the master's scale the drink read too small. */
+    --frame-size: min(95svw, 50svh);
 
     color-scheme: light only;
   }
@@ -213,7 +216,7 @@
       --rail-band: 77px;
       --rail-row: var(--tap);
       --watermark-size: 28svw;
-      --frame-size: min(58svw, 44svh);
+      --frame-size: min(72.5svw, 55svh);
     }
   }
 

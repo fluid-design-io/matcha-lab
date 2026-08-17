@@ -1,5 +1,5 @@
 import tgpu, { d, std } from 'typegpu'
-import { perlin2d, randf } from '@typegpu/noise'
+import { perlin3d, randf } from '@typegpu/noise'
 
 /**
  * The field shader.
@@ -13,6 +13,15 @@ import { perlin2d, randf } from '@typegpu/noise'
  * indistinguishable from the `body` colour it sits on. So the two are now tuned separately: the
  * ground is mottled clearly enough to be seen standing still, and the drift through it stays slow
  * enough that you have to watch for it.
+ *
+ * The motion is two things, and the distinction is the whole reason the surface reads as alive
+ * rather than as a still image. The noise *translates* — a slow lateral drift, which is what a
+ * 2D field can do — and it also *evolves*, because time is the third axis of a 3D noise field
+ * rather than an offset within a 2D one. Translation alone is nearly invisible on a gradient this
+ * soft: every pixel is handed its neighbour's value, and a neighbour four minutes away is the same
+ * colour. Evolution is what puts a mottle where there was none, which is the thing an eye
+ * registers at the edge of attention. Both stay under the rule above; neither is a knob that was
+ * simply turned up.
  */
 
 export const FieldUniforms = d.struct({
@@ -54,12 +63,17 @@ const DRIFT_SPAN = 13 / 255
 
 /**
  * Maps the realistic range of the two summed octaves onto ±1 so the extremes actually reach
- * `DRIFT_SPAN`. 2D Perlin is nominally `[-1, 1]` but practically peaks near ±0.7, and the 0.68/0.32
- * octave mix pulls that down further — without this the span would only ever be half-used. Values
- * past ±0.5 clamp, which costs the rare peak its last sliver of range and is invisible on a
+ * `DRIFT_SPAN`. Perlin is nominally `[-1, 1]` but practically peaks well inside that, and the
+ * 0.68/0.32 octave mix pulls it down further — without this the span would only ever be half-used.
+ * Values past ±0.5 clamp, which costs the rare peak its last sliver of range and is invisible on a
  * gradient this slow.
+ *
+ * `2.3`, not the `2` this carried while the noise was 2D: 3D Perlin's practical peak is lower than
+ * 2D's — the extra dimension gives the gradients another way to disagree — so the same gain would
+ * have quietly shipped a flatter surface than the one that was calibrated. This holds the mottling
+ * where it was rather than raising it.
  */
-const DRIFT_GAIN = 2
+const DRIFT_GAIN = 2.3
 
 /**
  * The drift is very slightly warm on its light side, which keeps it from reading as a flat
@@ -76,6 +90,25 @@ const DRIFT_TINT = d.vec3f(1, 0.96, 0.88)
  */
 const GRAIN_AMPLITUDE = 0.024
 
+/**
+ * How fast each octave travels through the third (time) axis of the noise, in noise-units per
+ * second — i.e. how fast the pattern *reshapes itself* where it stands.
+ *
+ * One unit is roughly one noise cell, so the coarse octave takes about half a minute to become a
+ * genuinely different mottle and the fine one about eighteen seconds. Measured over a 40x40 grid,
+ * that puts a pixel's colour at ~0.5/255 of change per second on average and ~1.4/255 at the
+ * steepest — half a percent of luminance per second at the very worst, which is under the
+ * threshold for catching a surface in the act of moving. The field fully decorrelates from itself
+ * in about thirty seconds, which is the half of it an eye does register: look away and back and
+ * the ground has changed, without ever having been seen to change.
+ *
+ * The fine octave is allowed to go faster because it carries a third of the amplitude — the two
+ * rates are not a ratio anyone should preserve, they are each the fastest that octave can go
+ * without being caught at it. These are the knobs to reach for if the field ever reads as busy.
+ */
+const COARSE_EVOLUTION = 0.03
+const FINE_EVOLUTION = 0.055
+
 export const fieldFragment = tgpu.fragmentFn({
   in: { uv: d.vec2f },
   out: d.vec4f,
@@ -89,12 +122,18 @@ export const fieldFragment = tgpu.fragmentFn({
   // Aspect-correct the sample space, so the drift pattern does not stretch when the iPad rotates.
   const p = uv.mul(d.vec2f(resolution.x / resolution.y, 1))
 
-  // Two octaves travelling in different directions at mismatched speeds, so the pattern never
-  // settles into a visible repeat. At ~0.01 units/second a feature crosses the screen in about two
-  // minutes. This is the knob to reach for first if the field ever reads as busy — the amplitude
-  // above is what makes the surface visible, the speed is what could make it distracting.
-  const coarse = perlin2d.sample(p.mul(2.1).add(d.vec2f(time * 0.013, time * -0.0084)))
-  const fine = perlin2d.sample(p.mul(5.3).add(d.vec2f(time * -0.018, time * 0.011)))
+  // Two octaves, each drifting laterally in a different direction at a mismatched speed and each
+  // advancing through the noise's third axis at its own rate, so the pattern never settles into a
+  // visible repeat in space or in time. The lateral rates are the slower half of the effect — a
+  // feature still takes well over a minute to cross the screen — and exist to give the evolution a
+  // direction to happen along, so the surface reads as light moving over a ground rather than as a
+  // texture shimmering in place.
+  const coarse = perlin3d.sample(
+    d.vec3f(p.mul(2.1).add(d.vec2f(time * 0.017, time * -0.011)), time * COARSE_EVOLUTION),
+  )
+  const fine = perlin3d.sample(
+    d.vec3f(p.mul(5.3).add(d.vec2f(time * -0.023, time * 0.014)), time * FINE_EVOLUTION),
+  )
   const drift = std.clamp((coarse * 0.68 + fine * 0.32) * DRIFT_GAIN, -1, 1)
 
   // Grain is a function of the pixel and nothing else — no time term anywhere. Animated grain

@@ -144,14 +144,20 @@ on `y≈1290`.
 
 | Token | compact ▭ | compact ▯ | `land` | `port` |
 | --- | --- | --- | --- | --- |
-| `--frame-size` | `min(76svw, 34svh)` | `min(76svw, 40svh)` | `min(48svh, 38svw)` | `min(58svw, 44svh)` |
+| `--frame-size` | `min(76svw, 34svh)` | `min(95svw, 50svh)` | `min(48svh, 38svw)` | `min(72.5svw, 55svh)` |
 | `--watermark-size` | `34svw` | `34svw` | `44svh` | `28svw` |
 
 Compact is one stacked composition whichever way the phone is held, so it splits the frame on a
 bare `aspect-ratio >= 1` rather than on `land`. Held sideways at 852×393 the masthead, footer and
-rail leave the stage about 143px and `40svh` overflows into the footer, so landscape-shaped
-compact caps at `34svh`. Held upright the `76svw` term binds long before the height term does, and
-the taller ceiling costs nothing.
+rail leave the stage about 143px and the portrait height term overflows into the footer, so
+landscape-shaped compact caps at `34svh`. Held upright the `svw` term binds long before the height
+term does, and the taller ceiling costs nothing.
+
+**Both portrait frames run 25% above the reference measurement** (`76 → 95svw` / `40 → 50svh`
+compact, `58 → 72.5svw` / `44 → 55svh` at `port`). At the master's own scale the drink read too
+small against all that field, and the stage has the height to spare in every portrait case — the
+`svw` term still binds, and the widest result, 373px at 393×852, stays inside the viewport. The
+landscape numbers are untouched; there the stage is the short axis and has nothing to give.
 
 ## Landscape — 1366×1024 (master, `ref-4-landscape.png`)
 
@@ -196,7 +202,7 @@ Derived sizes at the other landscape viewports:
 | `MATCHA COCONUT LAB` | `x=55`, `y≈95` | Beneath 抹茶, not beside it — the masthead stacks in portrait |
 | Favourite count | right, `y≈69` | Masthead, right-aligned |
 | Watermark kanji | ink `x 375→650`, `y 175→425` | `font-size: 28svw`, horizontally centred, top-anchored to the stage |
-| Render frame | `598×598` at `x 212→811`, `y 302→900` | `min(58svw, 44svh)`, horizontally centred |
+| Render frame | `598×598` at `x 212→811`, `y 302→900` | `min(72.5svw, 55svh)`, horizontally centred — the measurement × 1.25, see [the stage's two sizes](#the-stages-two-sizes) |
 | Title romaji | `y≈1104` | Footer |
 | Drink name | `y≈1140`, 319px wide | 36px / 300 |
 | Ingredient line | `y≈1185` | Gloss is dropped in portrait — the row would collide with the affordance |
@@ -213,7 +219,7 @@ Derived sizes at the other portrait viewports:
 | | 1024×1366 | 834×1194 | 768×1024 |
 | --- | --- | --- | --- |
 | `--edge` | 56 | 44 | 44 |
-| Render frame `min(58svw, 44svh)` | 594 | 484 | 445 |
+| Render frame `min(72.5svw, 55svh)` | 742 | 605 | 557 |
 | Watermark `28svw` | 287 | 234 | 215 |
 | `--rail-item` | 108 | 80 | 80 |
 | `--rail-band` / `--rail-row` | 87 / 48 | 77 / 44 | 77 / 44 |

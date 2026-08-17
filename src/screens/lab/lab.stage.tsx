@@ -7,6 +7,7 @@ import { useLab } from './lab.context'
 import { useDrinkSwipe } from './lab.gestures'
 import { LabLayer } from './lab.layer'
 import { LabRender } from './lab.render'
+import { cn } from '#/lib/utils'
 
 /**
  * The watermark and the render frame — the two things that occupy the stage — plus the surface
@@ -44,7 +45,7 @@ function LabWatermark() {
         {/* Noto Sans JP's ink sits ~9% of the font size below its em box's centre, so both offsets
             are corrections for that: -52% rather than -1/2 in landscape, and the portrait 4% puts
             the ink centre on y=300 at the 1024x1366 master. */}
-        <span className="font-jp absolute top-[4%] left-1/2 -translate-x-1/2 select-none text-(length:--watermark-size) leading-none font-[200] text-on-field-ghost land:top-1/2 land:left-[6svw] land:translate-x-0 land:-translate-y-[52%]">
+        <span className={cn("font-jp absolute top-[4%] left-1/2 -translate-x-1/2 select-none", "text-(length:--watermark-size) leading-none font-extralight text-shadow-md text-shadow-on-field-ghost/25 text-transparent", "land:top-1/2 land:left-[6svw] land:translate-x-0 land:translate-y-[-52%]")}>
           {drink.kanji}
         </span>
       </LabLayer>
@@ -72,7 +73,7 @@ function LabRenderFrame({ x }: { x: MotionValue<number> }) {
   return (
     <motion.div
       style={{ x }}
-      className="absolute top-1/2 left-1/2 size-(--frame-size) -translate-x-1/2 -translate-y-1/2 land:left-[76%]"
+      className="absolute top-3/5 land:top-1/2 left-1/2 size-(--frame-size) -translate-x-1/2 -translate-y-1/2 land:left-[76%] land:mt-6"
     >
       <LabLayer layer="render" className="size-full">
         <LabRender drink={drink} tone="field" />
