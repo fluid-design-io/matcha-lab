@@ -92,7 +92,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       {/* Painted inline rather than left to the stylesheet, so the very first frame is the ground
           colour and never a white flash. */}
-      <body style={{ backgroundColor: FIELD }}>
+      <body style={{ backgroundColor: FIELD }} className='grain'>
         {children}
         <Scripts />
       </body>
