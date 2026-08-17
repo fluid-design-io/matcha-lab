@@ -11,7 +11,7 @@ import { MotionConfig } from 'motion/react'
 
 import { DRINKS, OPENING_DRINK_ID, getDrink, getDrinkIndex, type DrinkId } from '#/domain/drinks'
 
-import type { LabContextValue } from './lab.types'
+import type { LabContextValue, SelectionKeyEvent } from './lab.types'
 
 const LabContext = createContext<LabContextValue | null>(null)
 
@@ -39,14 +39,10 @@ export function LabProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  // A window listener rather than a rail listener, so the arrows work wherever focus is, and it
-  // lives here because this is the one place that owns selection.
-  useEffect(() => {
-    // The recipe dialog traps focus while it is open; stepping the drink underneath it would
-    // change the recipe out from under the reader.
-    if (recipeOpen) return
-
-    const onKeyDown = (event: KeyboardEvent) => {
+  // A handler rather than only a listener: Base UI's dialog stops keydown propagating out of its
+  // popup, so the recipe overlay binds this itself to keep the arrows working over its pager.
+  const onSelectionKeyDown = useCallback(
+    (event: SelectionKeyEvent) => {
       if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
       if (isTextEntry(event.target)) return
 
@@ -59,21 +55,27 @@ export function LabProvider({ children }: { children: ReactNode }) {
       }
 
       event.preventDefault()
-    }
+    },
+    [step],
+  )
 
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [recipeOpen, step])
+  // A window listener rather than a rail listener, so the arrows work wherever focus is, and it
+  // lives here because this is the one place that owns selection.
+  useEffect(() => {
+    window.addEventListener('keydown', onSelectionKeyDown)
+    return () => window.removeEventListener('keydown', onSelectionKeyDown)
+  }, [onSelectionKeyDown])
 
   const value = useMemo<LabContextValue>(
     () => ({
       drink: getDrink(selectedId),
       select: setSelectedId,
       step,
+      onSelectionKeyDown,
       recipeOpen,
       setRecipeOpen,
     }),
-    [selectedId, recipeOpen, step],
+    [selectedId, recipeOpen, step, onSelectionKeyDown],
   )
 
   return (

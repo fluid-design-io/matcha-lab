@@ -17,7 +17,7 @@ import { RecipePanel } from './recipe.panel'
  * while `element.getAnimations()` reports work.
  */
 export function RecipeOverlay() {
-  const { drink, recipeOpen, setRecipeOpen } = useLab()
+  const { drink, recipeOpen, setRecipeOpen, onSelectionKeyDown } = useLab()
   const tokens = useMotionTokens()
   const transition = panelTransition(tokens)
 
@@ -41,6 +41,9 @@ export function RecipeOverlay() {
             />
 
             <Dialog.Popup
+              // The dialog stops keydown at the popup, so the window binding in `LabProvider` never
+              // sees it. Bound here the arrows page the panel the way the footer's pager does.
+              onKeyDown={onSelectionKeyDown}
               className={cn(
                 // The top layer of the app, over `LabShell` at z-10. Without a positive z the
                 // shell wins on tree order and hit-tests over the whole dialog.

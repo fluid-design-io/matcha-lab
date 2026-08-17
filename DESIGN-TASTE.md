@@ -307,18 +307,20 @@ the only lever for weight.
 **Only use box sizes 12, 16, or 20px** — halves and multiples of the 16 grid land on whole pixels
 and stay crisp. `13px` and `18px` produce a soft, slightly grey glyph.
 
-The app needs three icons. That is the whole list:
+The app needs five glyphs across four jobs. That is the whole list:
 
 | Use | Icon | Box | Effective stroke | Pairing |
 | --- | --- | --- | --- | --- |
 | Close the recipe overlay | `Xmark` | 16px | 1.5px | Standalone. 44px hit area, invisible. |
 | Empty / loading render frame | `Picture` | 20px | 1.88px | Above an 11px caption, inside the dashed frame. |
 | The masthead's source link | `LogoGithub` | 16px | 1.5px | Standalone, at `--color-on-field-muted`. 44px hit area, invisible. |
+| The recipe overlay's pager | `ArrowLeft`, `ArrowRight` | 16px | 1.5px | A pair on the footer's right margin. 44px hit areas, invisible. |
 
 **Ruled out, deliberately:**
 
-- `ArrowRight` — the recipe affordance sets `RECIPE →` as a typographic arrow *inside* the
-  letterspaced run. An SVG dropped into that run breaks the tracking rhythm and optical baseline.
+- `ArrowRight` **inside a letterspaced run** — the recipe affordance sets `RECIPE →` as a
+  typographic arrow. An SVG dropped into that run breaks the tracking rhythm and optical baseline.
+  Standalone in the overlay's pager it is fine, and that is the only place it ships.
 - `Flask`, `Cup`, `Mug` — vessel is communicated by the render itself, which draws each drink's
   true vessel. A vessel icon next to a picture of the vessel is redundant.
 - `Snowflake`, `Flame` — serve temperature sets as a `--text-label` word (`HOT` / `ICED` /
@@ -436,6 +438,14 @@ is a mistake.
   drops the render once its own short axis is under 600px.** All four do not fit below that line,
   and the render is the one that goes: it is the largest of them, and the only one repeating what
   the stage was showing a tap ago. Restoring it at phone sizes brings the scrollbar back.
+- **The footer's metadata line is answered by a pager on the opposite margin** — `ArrowLeft` and
+  `ArrowRight`, driving the same clamped `step` as the rail and the swipe, so the reader moves
+  through the nine without closing the panel. At either end the arrow **holds its place and goes
+  inert** at `--color-on-paper-faint`: an end that disappears reflows the footer, and the two ends
+  of the collection are worth showing. It is `aria-disabled` rather than `disabled`, so paging to an
+  end cannot destroy the focused control and throw focus back to the dialog's trap.
+- **Arrow keys page the panel too.** They step selection wherever focus is, and the open recipe is
+  no longer an exception to that — the pager is what makes it expected rather than a surprise.
 - No nested scrolling, at any target viewport, ever.
 
 ### 7. Content voice
