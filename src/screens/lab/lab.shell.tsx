@@ -27,7 +27,8 @@ export function LabShell({ masthead, stage, footer, rail, className }: LabShellP
       className={cn(
         // svh, not dvh: it is the smallest viewport height, so content fits even mid-gesture
         // while Safari's toolbars are animating. In standalone the two are identical.
-        'grid h-svh w-screen overflow-hidden',
+        // relative z-10 puts the shell above the field canvas, which sits at z-0.
+        'relative z-10 grid h-svh w-screen overflow-hidden',
         'grid-cols-1 grid-rows-[auto_1fr_auto_auto]',
         "[grid-template-areas:'masthead''stage''footer''rail']",
         'land:grid-cols-[1fr_var(--rail-w)] land:grid-rows-[auto_1fr_auto]',

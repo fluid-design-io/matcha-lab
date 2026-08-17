@@ -22,7 +22,8 @@
     ],
     "types": [
       "vite/client",
-      "@webgpu/types"
+      "@webgpu/types",
+      "bun"
     ],
 
     /* Bundler mode */

@@ -1,3 +1,4 @@
+import { MatchaField } from '#/components/matcha-field'
 import { useFavouritesPersistence } from '#/domain/favourites'
 
 import { LabShell } from './lab.shell'
@@ -11,5 +12,10 @@ import { LabShell } from './lab.shell'
 export function LabScreen() {
   useFavouritesPersistence()
 
-  return <LabShell masthead={null} stage={null} footer={null} rail={null} />
+  return (
+    <>
+      <MatchaField />
+      <LabShell masthead={null} stage={null} footer={null} rail={null} />
+    </>
+  )
 }

@@ -70,6 +70,11 @@ Reached when the core loop — *select drink → view drink → open recipe → 
   a phone in landscape correctly stays compact because `land` also demands `height >= 620px`.
   Fonts are subset to 28 KB total by enumerating the exact glyph set — taking whole unicode ranges
   costs 6.8× on variable CJK. — [App shell and SPA foundation](./issues/02-app-shell.md)
+- The field is TypeGPU at `src/components/matcha-field/`. Drift animates; grain is a function of
+  the pixel and nothing else, because animated grain reads as television static at any amplitude.
+  Verified by offscreen readback, not screenshot: mean lands on 123/143/99, spread ±3/255, 0.39/255
+  of movement per minute. Canvas must be `z-0`, never negative — `body` carries the flat colour and
+  a negative-z-index child is painted behind it. — [The living matcha field](./issues/06-matcha-field.md)
 
 ## Not yet specified
 
