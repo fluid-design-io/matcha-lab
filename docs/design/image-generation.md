@@ -138,10 +138,29 @@ verification, and refuses to keep an output that fails.
 | Output size | **1254×1254 PNG, fixed.** The tool exposes no size parameter and silently ignores a 2048² request. Only aspect ratio is steerable. |
 | Retries | Regenerating is cheap. Regenerate rather than accept a near-miss. |
 
+### A newer model does not buy a better source
+
+`-m gpt-5.6-terra` was probed on 凪 NAGI against the same prompt, in the same binary
+(`codex-cli 0.148.0-alpha.9`). It is genuine `image_gen` output — 24,136 distinct colours — and
+it is **not** an argument for regenerating the nine:
+
+| | Existing source | `gpt-5.6-terra` |
+| --- | --- | --- |
+| Native size | 1254² | **1254²** — no gain; the size is fixed at the tool, not the model |
+| Mean Sobel gradient | 2.29e-06 | **1.25e-06** — softer, not crisper |
+| Subject height | 900 / 1254 = **72%** | 1011 / 1254 = **81%** — outside the contract's "70%, no more" |
+| Ice | Outline with a faint wash | Near-opaque milky blocks |
+
+The last two are the exact drifts this file exists to prevent, and the prompt clauses written to
+prevent them (`70% - no more`, `not as flat opaque blocks of colour`) did not hold on that model.
+The upscale from 1254 to 2048 is soft, and a newer model does not fix it — nothing here changes
+until the tool exposes a larger native size.
+
 ## Verifying
 
-Four checks, all mandatory, on **every single output**. `scripts/generate-render.sh` runs them and
-refuses to keep anything that fails. Each one exists because it caught a real defect.
+Five checks, all mandatory. Four on the generated PNG and — this is the one that was missing —
+**one on the file that actually ships**. `scripts/generate-render.sh` runs them all and refuses to
+keep anything that fails. Each one exists because it caught a real defect.
 
 ### 1. It is a PNG at the expected size
 
@@ -193,34 +212,106 @@ order, because these are the four things that actually drift:
 **Nine that nearly match is worse than eight that do.** Regenerate anything that breaks family.
 There is no budget argument here — it is 70 seconds.
 
+### 5. The *shipped* WebP has a flat ground — check the output, not the input
+
+The four checks above all pass on a PNG whose ground the encoder is about to ruin, which is how
+ticket 05 shipped nine defective files under a green tick: every check it ran sat upstream of
+`cwebp`. Measure what decodes. Post-processing, below, is what produces this.
+
+In each of the four 200×200 corners of the shipped file: the modal colour must be exactly
+`122,143,99`, it must own **≥ 99%** of the square, and nothing in the square may stray more than
+**5 levels** on any channel.
+
+```bash
+magick <id>.webp -crop 200x200+0+0 +repage -format %c histogram:info:- | sort -rn | head -1
+```
+
+Not "one distinct colour". A lossy VP8 encode always leaves the very first macroblock out — it is
+the one block in the frame with no neighbour to predict from. Measured on 影 KAGE: 252 stray
+pixels in a 200×200 corner, up to 4 levels off, and nothing below q90 removes them. At the largest
+size the app ever draws a render, 598 CSS px, that block is under 5 px square in the extreme
+corner.
+
+Purity is the discriminator, and it separates cleanly: the fixed set measures 99.37% at worst, the
+broken set 69.85% at best.
+
 ## Post-processing
 
 Tell Codex **not** to resize. Do it yourself, so the pipeline is one command and reproducible.
 
-**Normalise the ground first.** This is not optional polish — it is what makes the renders work.
 Each drink sits full-bleed on the field with no border, so its own ground has to *be* the field.
-The model lands within a few levels of the target, which is invisible in isolation and glaring in
-the app: three levels off turns the render into a visible square patch. A per-channel offset is
-the gentlest correction that fixes it, and at single-digit deltas nothing clips.
+Everything below is in service of one sentence: **the ground of the file that ships must be one
+exact colour, and the same exact colour on all nine.** Four steps, in this order.
+
+### 1. Offset the ground to `#7B8F63`
+
+The model lands within a few levels of the target. A per-channel offset is the gentlest correction,
+and at single-digit deltas nothing clips.
 
 ```bash
-# ground → exactly #7B8F63, then 1254 → 2048, then WebP
 magick out.png \
-  -channel R -evaluate add "${dr}%" \
-  -channel G -evaluate add "${dg}%" \
-  -channel B -evaluate add "${db}%" +channel \
-  -filter Lanczos -resize 2048x2048 -strip render-2048.png
-cwebp -q 82 -m 6 render-2048.png -o ../src/assets/renders/<id>.webp
+  -channel R -evaluate add "${dr}%" -channel G -evaluate add "${dg}%" \
+  -channel B -evaluate add "${db}%" +channel  ...
 ```
 
 `-evaluate add` takes **quantum units, not 8-bit levels** — on a Q16 build `add 6` shifts by
 6/65535 and does nothing at all, silently. Percent of QuantumRange is the portable way to say
 "+6/255": `dr = (123 - corner.r) / 255 * 100`.
 
-After normalising, all nine grounds land within one level of `123, 143, 99`, and the square
-disappears into the field.
+### 2. Flatten it — the offset alone is not enough
 
-- A 1.25 MB PNG lands at ~44–52 KB at `q82`. That is the measured range; hold the set near it.
+The offset moves the ground's *mean*. The ground is not flat to begin with: the generator leaves
+about 33 distinct colours in a 60×60 corner, and the Lanczos upscale spreads that noise rather
+than removing it. Snap it:
+
+```bash
+  ... -fuzz 2% -fill '#7B8F63' -opaque '#7B8F63' ...
+```
+
+**2% is the smallest fuzz that works and it was chosen by measurement.** At 1% the top-left corner
+goes flat and the other three do not, on every one of the nine. At 2% all four corners on all nine
+are a single colour. At 4% and above the flatten starts eating the faintest washes. Verified by
+counting the drawing before and after: at 2%, nothing more than 10 levels off the ground moves at
+all, and what does move is 0.05–0.9% of the near-ground pixels — the outermost fringe of the
+faintest wash.
+
+### 3. Upscale — flatten *before* the resize, never after
+
+Lanczos over a region that is already one exact colour returns that same colour, so a flat ground
+survives the resize intact. Flattening afterwards would have to snap the resampling's own ringing
+around the line, and would leave a step where the halo meets the ground.
+
+```bash
+  ... -filter Lanczos -resize 2048x2048 -strip render-2048.png
+```
+
+### 4. Encode, then measure the *decoded* file and pre-compensate
+
+This is the step that was missing, and it is the one that matters. `cwebp -q 82` is lossy: it
+throws away the flat ground the first three steps built. The nine that shipped before this was
+fixed decoded to five different ground colours, none of them flat — corners 28–70% pure, mottled
+by ±2 levels in every 16×16 block.
+
+**The shipped ground is `rgb(122,143,99)`, not `rgb(123,143,99)`, and that is not a compromise —
+it is the nearest colour that exists.** Lossy WebP is VP8: RGB goes through 8-bit YUV, so the
+decoded colour can only land on the lattice that integer YUV maps back to, and `123,143,99` is not
+on it. For the (Y,V) pair that decodes red to 123, blue can only be 98 or 100 — `B = Y' +
+2.018·(U−128)` steps two levels per unit of U and skips 99. Measured, not assumed: a solid patch
+swept over the full 15×15×15 box of inputs around the target produced `123,143,99` **zero times
+out of 3,375 encodes**, at q75, q82, q90 and q100 alike. Quality does not move the lattice.
+
+So the script walks candidate ground colours outward from `122,143,99`, re-encodes, and keeps the
+first whose *decoded* ground is exactly `122,143,99` and flat in all four corners. All nine hit on
+the first candidate. One level low on red is ΔE76 0.41, on a field the shader is already drifting
+±3 levels — and what actually shows is not the offset but *inconsistency*, nine grounds that
+differ from each other and shift the colour mid-dissolve as two renders cross-fade.
+
+- The nine total **481 KB** at `q82 -m 6`, 31–78 KB each. Hold the set near that.
+- Exactness is available only at lossless prices: `-near_lossless 0 -q 100` decodes to
+  `123,143,99` exactly — at **544 KB per image**, 4.9 MB for the set. Not for a home-screen app.
+- `-exact` is a **no-op** here. It preserves RGB under transparent pixels only; these are opaque,
+  and output is byte-identical with and without it.
+- `-sharp_yuv` is *worse* for this: it lands the ground on `123,144,100`, two channels off.
 - **Do not use `sips` for WebP.** `sips -s format webp` silently produces no file and exits 0.
 - `-strip` before conversion — the generated PNGs carry metadata nobody needs.
 
