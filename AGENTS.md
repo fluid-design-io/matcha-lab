@@ -30,6 +30,19 @@ One stem per folder, one responsibility per suffix (`.screen.tsx`, `.data.ts`, `
 `.context.tsx`, `.utils.ts`, `.content.ts`). `index.ts` is the only public boundary; leaves stay
 internal unless they are intentionally public.
 
+## Coding preferences - general
+
+- Channel both "measure twice, cut once" and "yagni". Fight scope creep. Try to honor the dev's intent in both minimal and realistic fashion.
+- Typesafety is useful, take advantage of it.
+- Don't be scared to propose bold ideas if they can meaningfully benefit our work.
+- Tests are good! Endless smoke tests, "regression tests" for feature deletions, etc, much less good. Tests should be focused, not slop.
+- Comments are a great way to clarify functionality and how code is used. Don't comment every line, but do describe functions, classes and non-obvious constants above their definitions.
+- A comment is ONE concise sentence (two short ones at most) saying what the thing does, or stating a constraint the code cannot show — "must match the auth path's hash", "deep import to stay off the barrel, Reanimated breaks in bun test". If it's obvious from the code, don't write it.
+- No multi-paragraph narratives, no design rationale, no security justification in comments. That belongs in an ADR or the area's `CONTEXT.md`.
+- Never reference ADR numbers, ticket/phase/rung/tranche vocabulary, or `file.ts:42` paths in a comment — all of them drift. Name the symbol instead.
+- Keep comments up to date! When making changes, it's important to keep things in sync.
+
+
 ## Commits and pull requests
 
 These rules apply to commit subjects and PR titles alike. A commit subject is held to exactly the same standard as the title of the PR that carries it.
