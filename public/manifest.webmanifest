@@ -1,7 +1,10 @@
 {
+  "id": "/",
   "name": "Matcha Lab",
   "short_name": "Matcha Lab",
   "description": "Nine matcha drinks, one at a time.",
+  "lang": "en",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -1,0 +1,14 @@
+# SPA fallback. Read by Netlify and by Cloudflare Pages from the root of the published
+# directory — Vite copies this file verbatim from public/ into .output/public/.
+#
+# Client-side routing owns every path, so a path the host has no file for must come back as the
+# prerendered shell with a 200, not a 404. A non-forced 200 rule only fires when nothing on disk
+# matches, so /assets/*, /icons/* and the manifest still serve themselves.
+#
+# `/` is covered by index.html on its own; this line exists for deep links such as
+# /prototypes/motion and for anything the router adds later.
+#
+# The shell is emitted as index.html by `spa.prerender.outputPath` in vite.config.ts. If a build
+# ever puts it back at /_shell.html, change the target below and nothing else.
+
+/*    /index.html    200

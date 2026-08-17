@@ -1,0 +1,38 @@
+# Cache policy. Two classes of file, and getting them the wrong way round is how a home-screen
+# app pins itself to a build from three deploys ago with no visible way out.
+#
+# Read by Netlify and by Cloudflare Pages from the root of the published directory — Vite copies
+# this file verbatim from public/ into .output/public/.
+
+# Fingerprinted, so immutable. Everything under /assets/ carries a content hash in its filename
+# (index-BpK7vtO7.js, styles-BF0LTRCK.css, and both woff2 subsets, which are imported from src/
+# for exactly this reason). The URL changes when the bytes change, so the old URL is never
+# requested again and a year is not a risk.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Not fingerprinted, so revalidate every time. The shell is the file that names the hashed
+# assets; cache it and the new assets are never discovered. This is the one rule that decides
+# whether an installed home-screen app can ever update itself.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Copied from public/ under fixed names, so same treatment. The explicit Content-Type is
+# insurance: a manifest served as text/plain is ignored, and the failure looks like a manifest
+# bug rather than a header one.
+/manifest.webmanifest
+  Cache-Control: public, max-age=0, must-revalidate
+  Content-Type: application/manifest+json; charset=utf-8
+
+/icons/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Deliberately no Cache-Control in this block. Every block matching a path contributes its
+# headers, and setting one header name from two blocks is the single case where hosts disagree
+# about which wins — so no header name appears twice in this file.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

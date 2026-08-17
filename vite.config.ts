@@ -7,6 +7,9 @@ import babel from '@rolldown/plugin-babel'
 import typegpuPlugin from 'unplugin-typegpu/vite'
 
 const config = defineConfig({
+  server: {
+    allowedHosts: true,
+  },
   resolve: {
     tsconfigPaths: true,
     // Defensive. A stale dep-optimizer cache produced "Invalid hook call" the first time
@@ -21,7 +24,15 @@ const config = defineConfig({
     tanstackStart({
       // A home-screen app should behave as a standalone shell rather than round-tripping a
       // server on every launch. The shell prerenders once; everything after that is client-side.
-      spa: { enabled: true },
+      spa: {
+        enabled: true,
+        // Emit the shell as `index.html` rather than the default `_shell.html`. There are no
+        // server functions and no loaders, so `.output/public/` IS the whole site — and a site
+        // whose root document is called index.html is served correctly by every static host
+        // with no configuration at all. `public/_redirects` then only has to cover deep links.
+        // See docs/deploy.md.
+        prerender: { outputPath: '/index' },
+      },
     }),
     viteReact(),
     babel({ presets: [reactCompilerPreset()] }),
