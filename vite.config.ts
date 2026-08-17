@@ -7,7 +7,14 @@ import babel from '@rolldown/plugin-babel'
 import typegpuPlugin from 'unplugin-typegpu/vite'
 
 const config = defineConfig({
-  resolve: { tsconfigPaths: true },
+  resolve: {
+    tsconfigPaths: true,
+    // Defensive. A stale dep-optimizer cache produced "Invalid hook call" the first time
+    // motion/react was added; clearing node_modules/.vite fixed it, and these keep the single
+    // React instance explicit so it cannot come back.
+    dedupe: ['react', 'react-dom'],
+  },
+  optimizeDeps: { include: ['motion', 'motion/react'] },
   plugins: [
     nitro({ rollupConfig: { external: [/^@sentry\//] } }),
     tailwindcss(),

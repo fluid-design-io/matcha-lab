@@ -10,33 +10,43 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PrototypesMotionRouteImport } from './routes/prototypes.motion'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrototypesMotionRoute = PrototypesMotionRouteImport.update({
+  id: '/prototypes/motion',
+  path: '/prototypes/motion',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/prototypes/motion': typeof PrototypesMotionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/prototypes/motion': typeof PrototypesMotionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/prototypes/motion': typeof PrototypesMotionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/prototypes/motion'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/prototypes/motion'
+  id: '__root__' | '/' | '/prototypes/motion'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PrototypesMotionRoute: typeof PrototypesMotionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +58,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/prototypes/motion': {
+      id: '/prototypes/motion'
+      path: '/prototypes/motion'
+      fullPath: '/prototypes/motion'
+      preLoaderRoute: typeof PrototypesMotionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PrototypesMotionRoute: PrototypesMotionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
