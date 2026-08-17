@@ -39,7 +39,11 @@ function LabTitle() {
       </LabLayer>
 
       <LabLayer layer="title" className="mt-3.5">
-        <p aria-hidden className="text-title text-on-field">
+        {/* Compact wraps the longer names onto a second line and the short ones not at all, which
+            walked the ingredient line and the rail up and down on every drink change. Two lines are
+            reserved there — no name needs a third — and released once the wider treatments, where
+            every name fits on one line, take over. */}
+        <p aria-hidden className="text-title min-h-[2lh] text-balance text-on-field land:min-h-0 port:min-h-0">
           {drink.name}
         </p>
       </LabLayer>
