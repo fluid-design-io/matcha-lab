@@ -75,6 +75,11 @@ Reached when the core loop — *select drink → view drink → open recipe → 
   Verified by offscreen readback, not screenshot: mean lands on 123/143/99, spread ±3/255, 0.39/255
   of movement per minute. Canvas must be `z-0`, never negative — `body` carries the flat colour and
   a negative-z-index child is painted behind it. — [The living matcha field](./issues/06-matcha-field.md)
+- Landscape master is built and measured against ref-4 element by element. The rail slot is a
+  fixed `--rail-item` pitch with contents absolutely positioned, so selection never moves the
+  neighbours. Two traps recorded in `DESIGN-TASTE.md`: `text-(length:...)` sets size but not
+  weight, and kanji ink sits ~9% below its em box centre — measure ink with `TextMetrics`, never
+  the element box. — [Landscape master layout](./issues/07-landscape-layout.md)
 
 ## Not yet specified
 

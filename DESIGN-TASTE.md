@@ -120,7 +120,7 @@ less room.
 
 | Token | Role | Size | Compact | Weight | Tracking | Family |
 | --- | --- | --- | --- | --- | --- | --- |
-| `--text-watermark` | Giant watermark kanji | `44svh` | `44svh` | 200 | `0` | JP |
+| `--watermark-size`¹ | Giant watermark kanji | `44svh` | `28svw` (portrait) | 200 | `0` | JP |
 | `--text-title` | Drink name | `2.25rem` / 36px | 30px | 300 | `-0.01em` | Latin |
 | `--text-quantity` | Recipe build quantity | `1.875rem` / 30px | 26px | 300 | `-0.01em` | Latin |
 | `--text-kanji-xl` | Recipe header kanji | `2.5rem` / 40px | 34px | 300 | `0` | JP |
@@ -135,6 +135,15 @@ less room.
 | `--text-label` | `MATCHA COCONUT LAB`, `RECIPE →`, `BUILD`, `SAVED` | `0.625rem` / 10px | 9px | 500 | `0.30em` | Latin |
 | `--text-micro` | Axis names, step numbers, rail romaji | `0.5625rem` / 9px | 9px | 500 | `0.18em` | Latin |
 | `--text-numeral` | Favourite count | `0.6875rem` / 11px | 10px | 400 | `0.18em` | Latin, `tnum` |
+
+¹ Not a `--text-*` token, because it is orientation-dependent rather than density-dependent. It
+lives on `:root` alongside the layout numbers. It also needs a **vertical nudge**: Noto Sans JP's
+ink sits about 9% of the font size *below* its em box's centre, so centring the box leaves the
+character low on the axis. `translateY(-52%)` rather than `-50%`.
+
+When checking any large kanji against a reference, measure the **ink**, not the element box —
+`canvas.measureText().actualBoundingBoxAscent/Descent` gives it exactly. At 450px the two differ
+by 40px, which is more than enough to send you correcting in the wrong direction.
 
 **Rules that are not negotiable:**
 

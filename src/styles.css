@@ -79,6 +79,9 @@
    * green is the whole world. */
   --color-scrim: color-mix(in oklab, #414f34 88%, transparent);
 
+  /* The watermark's size is not a --text-* token: it is orientation-dependent (44svh landscape,
+   * 28svw portrait) and lives as --watermark-size on :root below. One source, not two. */
+
   /* ---------------------------------------------------------------------------- type scale
    *
    * Two density multipliers, set on :root below. Display type gives up ~16% at the smaller
