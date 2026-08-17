@@ -24,6 +24,30 @@ export const Route = createRootRoute({
         name: 'description',
         content: 'Nine matcha drinks, one at a time.',
       },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:title', content: 'Matcha Lab' },
+      {
+        property: 'og:description',
+        content: 'Nine matcha drinks, one at a time.',
+      },
+      { property: 'og:image', content: '/og.png' },
+      { property: 'og:image:width', content: '1280' },
+      { property: 'og:image:height', content: '640' },
+      {
+        property: 'og:image:alt',
+        content: 'A matcha dessert displayed on the Matcha Lab interface.',
+      },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: 'Matcha Lab' },
+      {
+        name: 'twitter:description',
+        content: 'Nine matcha drinks, one at a time.',
+      },
+      { name: 'twitter:image', content: '/og.png' },
+      {
+        name: 'twitter:image:alt',
+        content: 'A matcha dessert displayed on the Matcha Lab interface.',
+      },
 
       // Home-screen install. Icon art is deferred; the wiring is not.
       { name: 'apple-mobile-web-app-capable', content: 'yes' },
