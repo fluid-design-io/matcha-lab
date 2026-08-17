@@ -14,7 +14,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$ROOT/.render-work"
-OUT="$ROOT/public/renders"
+# src/, not public/ — Vite fingerprints imported assets, so the renders get immutable caching.
+# A home-screen app relaunches from cache far more often than it downloads.
+OUT="$ROOT/src/assets/renders"
 
 # The bundled binary. `codex` on PATH (0.141.0) cannot generate images and silently fakes them
 # with PIL while reporting success. This is not interchangeable.
@@ -45,13 +47,13 @@ build_prompt() {
   cat <<PROMPT
 A single ${subject}, drawn as flat editorial line art.
 
-STYLE. Fine-line illustration with soft translucent washes. One confident contour line of even weight, about 0.25% of the image width, in warm off-white #F3EBD1. Interiors are filled with flat translucent wash only. No hard highlights, no cross-hatching, no stippling, no halftone, no outline other than the contour, no sketchy or doubled lines.
+STYLE. Fine-line illustration with soft translucent washes. One confident contour line of even weight, about 0.25% of the image width, in warm off-white #F3EBD1. The drawing is predominantly LINE: every shape is described by its contour, and fills are pale translucent washes that never approach the opacity or the presence of the line. Ice, foam and any solid contents are drawn in outline with only the faintest wash inside them - they must read as delicate line drawing, not as flat opaque blocks of colour. No hard highlights, no cross-hatching, no stippling, no halftone, no outline other than the contour, no sketchy or doubled lines.
 
 BACKGROUND. Completely flat matte #7B8F63, edge to edge. No gradient, no vignette, no horizon, no table, no surface, no shadow, no reflection, no border, no frame.
 
 CAMERA. Straight-on elevation, eye level about 10 degrees above the rim of the vessel - just enough that the opening reads as a shallow ellipse. No perspective tilt, no dutch angle, no top-down view, no three-quarter rotation. The vessel's vertical axis is exactly vertical in frame.
 
-FRAMING. Square 1:1. The subject is centred on both axes and occupies 70% of the frame height, with even margin above and below. Nothing is cropped by the frame.
+FRAMING. Square 1:1. The subject is centred on both axes and occupies 70% of the frame height - no more. Leave a clear empty margin of about 15% of the frame height above the vessel and 15% below it. Nothing is cropped by the frame.
 
 LIGHT. Soft and diffuse from the upper left at a shallow angle. No cast shadow on the background, no specular highlight, no rim light.
 
@@ -105,7 +107,7 @@ verify_and_convert() {
   magick "$dir/out.png" -filter Lanczos -resize 2048x2048 -strip "$dir/render-2048.png"
   cwebp -quiet -q 82 -m 6 "$dir/render-2048.png" -o "$OUT/$id.webp"
 
-  printf '  \033[32m✓\033[0m %s  %s colours  →  public/renders/%s.webp (%s)\n' \
+  printf '  \033[32m✓\033[0m %s  %s colours  →  src/assets/renders/%s.webp (%s)\n' \
     "$(magick identify -format '%wx%h' "$dir/out.png")" "$colours" "$id" \
     "$(du -h "$OUT/$id.webp" | cut -f1)"
 }

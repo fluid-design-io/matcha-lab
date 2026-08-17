@@ -37,9 +37,13 @@ paraphrase, reorder, or "improve" it — the fixed wording is what holds the nin
 A single {{SUBJECT}}, drawn as flat editorial line art.
 
 STYLE. Fine-line illustration with soft translucent washes. One confident contour line of
-even weight, about 0.25% of the image width, in warm off-white #F3EBD1. Interiors are filled
-with flat translucent wash only. No hard highlights, no cross-hatching, no stippling, no
-halftone, no outline other than the contour, no sketchy or doubled lines.
+even weight, about 0.25% of the image width, in warm off-white #F3EBD1. The drawing is
+predominantly LINE: every shape is described by its contour, and fills are pale translucent
+washes that never approach the opacity or the presence of the line. Ice, foam and any solid
+contents are drawn in outline with only the faintest wash inside them - they must read as
+delicate line drawing, not as flat opaque blocks of colour. No hard highlights, no
+cross-hatching, no stippling, no halftone, no outline other than the contour, no sketchy or
+doubled lines.
 
 BACKGROUND. Completely flat matte #7B8F63, edge to edge. No gradient, no vignette, no horizon,
 no table, no surface, no shadow, no reflection, no border, no frame.
@@ -49,8 +53,9 @@ enough that the opening reads as a shallow ellipse. No perspective tilt, no dutc
 top-down view, no three-quarter rotation. The vessel's vertical axis is exactly vertical in
 frame.
 
-FRAMING. Square 1:1. The subject is centred on both axes and occupies 70% of the frame height,
-with even margin above and below. Nothing is cropped by the frame.
+FRAMING. Square 1:1. The subject is centred on both axes and occupies 70% of the frame height
+- no more. Leave a clear empty margin of about 15% of the frame height above the vessel and
+15% below it. Nothing is cropped by the frame.
 
 LIGHT. Soft and diffuse from the upper left at a shallow angle. No cast shadow on the
 background, no specular highlight, no rim light.
@@ -68,8 +73,12 @@ garnish, no coaster, no napkin, no hands, no second vessel, no background object
 
 - **"about 0.25% of the image width"** — a relative line weight. Absolute pixel values get
   ignored; a percentage survives the model's fixed 1254² output.
-- **"70% of the frame height"** — the single biggest family-breaker. Without it, subject scale
-  wanders between 45% and 90% and the nine will not sit in the same square frame.
+- **"predominantly LINE … not flat opaque blocks of colour"** — added after the first live test.
+  Without it the model fills ice and foam as solid gouache shapes, which reads as a different
+  illustrator from the reference even though everything else matches.
+- **"70% of the frame height — no more"**, with the 15%-margin restatement — the single biggest
+  family-breaker. The first test, which only said "70%", came back at 79%. Naming the empty
+  margin as well as the subject brought it to 72%.
 - **"about 10 degrees above the rim"** — the model reads "straight on" as 0° and "three-quarter"
   as 35°. Naming the number is what keeps the ellipses consistent.
 - **"No straw"** — the strawberry latte is normally served with one, and the model will add it.
@@ -162,15 +171,17 @@ Tell Codex **not** to resize. Do it yourself, so the pipeline is one command and
 ```bash
 # 1254 → 2048, then WebP
 magick out.png -filter Lanczos -resize 2048x2048 -strip render-2048.png
-cwebp -q 82 -m 6 render-2048.png -o ../public/renders/<id>.webp
+cwebp -q 82 -m 6 render-2048.png -o ../src/assets/renders/<id>.webp
 ```
 
-- A 1.25 MB PNG lands at ~52 KB at `q82`. That is the measured number; hold the set near it.
+- A 1.25 MB PNG lands at ~44–52 KB at `q82`. That is the measured range; hold the set near it.
 - **Do not use `sips` for WebP.** `sips -s format webp` silently produces no file and exits 0.
 - `-strip` before conversion — the generated PNGs carry metadata nobody needs.
 
-Land them at `public/renders/<drink-id>.webp` and wire them to the drink records, so the render
-frame resolves one image per drink by id.
+Land them at **`src/assets/renders/<drink-id>.webp`**, not `public/` — Vite fingerprints imported
+assets, so they get immutable caching, and a home-screen app relaunches from cache far more often
+than it downloads. `src/domain/drinks/drinks.renders.ts` maps id → imported URL, which is how the
+render frame resolves one image per drink.
 
 ## Deferred, in the same family
 

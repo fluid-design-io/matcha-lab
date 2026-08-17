@@ -56,6 +56,11 @@ Reached when the core loop — *select drink → view drink → open recipe → 
   darkened field, never black. Type is Noto Sans JP + Archivo, self-hosted and subset. Four icons.
   Aspect-ratio breakpoints are `@custom-variant`, since `--breakpoint-*` cannot combine
   `min-width` and `min-height`. — [Design taste contract](./issues/01-design-taste.md)
+- Content lives at `src/domain/drinks/`. Axis extremes are derived two ways from one dataset:
+  `leadsCollection` (ties included) fills the diamonds, `collectionExtremes` (sole-or-shared-by-two,
+  tiebreak on distance from the collection mean) writes the sentence. With the final nine that
+  sentence belongs to TŌ, not NAGI as the mockup shows — the derivation catches it.
+  — [The nine drinks as content](./issues/03-drink-content.md)
 
 ## Not yet specified
 
