@@ -174,12 +174,30 @@
     --type-display: 0.84;
     --type-micro: 0.92;
 
-    /* Layout, per DESIGN-TASTE / docs/design/layout-geometry.md */
+    /* Layout, per DESIGN-TASTE / docs/design/layout-geometry.md
+     *
+     * --rail-item is the rail's *pitch per slot*: the slot's height in landscape, its width in
+     * portrait. Selection changes the glyph inside the slot and never the pitch, so the rail
+     * cannot reflow when you tap it and the shared underline slides a constant distance.
+     *
+     * --rail-band and --rail-row are the portrait rail's cross-axis: the band is the whole rule-
+     * to-baseline block, the row is the slot inside it, bottom-aligned within the band. Landscape
+     * has no use for either — there the rail's cross axis is --rail-w.
+     *
+     * Nine slots at the measured pitch are *wider than the content column* in portrait, which is
+     * what the reference shows: the slot boxes bleed into the shell's edge padding, the glyph ink
+     * does not. Compact is the one case where nine fixed slots cannot fit a phone, so it falls
+     * back to whatever ninth of the viewport is going. */
     --edge: 24px;
     --rail-w: 100%;
-    --rail-item: 52px;
+    --rail-item: min(52px, calc((100svw - 12px) / 9));
+    --rail-band: 68px;
+    --rail-row: 44px;
     --watermark-size: 34svw;
-    --frame-size: min(76svw, 40svh);
+    /* 34svh, not 40: compact is one stacked layout whichever way the phone is held, and at
+     * 852x393 the masthead, footer and rail leave the stage ~143px. 40svh overflowed it into the
+     * footer; 34 clears it. Portrait compact is nowhere near the limit either way. */
+    --frame-size: min(76svw, 34svh);
     --panel-pad: 28px;
 
     color-scheme: light only;
@@ -195,11 +213,16 @@
     }
   }
 
+  /* 80px, not the 92px in the geometry table or the 88px this file used to carry: one value has
+   * to serve both 834x1194 and 768x1024, and at 768 nine slots of 88 (792px) are wider than the
+   * viewport. Nine of 80 come to 720 and clear it with 24px a side. */
   @media (aspect-ratio < 1) and (width >= 700px) and (height >= 900px) {
     :root {
       --edge: 44px;
       --rail-w: 100%;
-      --rail-item: 88px;
+      --rail-item: 80px;
+      --rail-band: 77px;
+      --rail-row: 44px;
       --watermark-size: 28svw;
       --frame-size: min(58svw, 44svh);
     }
@@ -223,9 +246,13 @@
     }
   }
 
+  /* Portrait master: rule at y=1233, glyph centres at y=1290, rail bottom 46px off the viewport —
+   * band 87 = 1px rule + 38px clear + a 48px slot, bottom-aligned. */
   @media (width >= 960px) and (height >= 1280px) {
     :root {
       --rail-item: 108px;
+      --rail-band: 87px;
+      --rail-row: 48px;
     }
   }
 

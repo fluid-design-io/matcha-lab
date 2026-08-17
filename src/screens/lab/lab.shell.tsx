@@ -47,7 +47,12 @@ export function LabShell({ masthead, stage, footer, rail, className }: LabShellP
           neither can push the footer down. */}
       <div className="relative min-h-0 [grid-area:stage]">{stage}</div>
       <div className="[grid-area:footer]">{footer}</div>
-      <div className="[grid-area:rail]">{rail}</div>
+      {/* Portrait needs air between the title block and the rule above the rail — 40px, which is
+          what puts the romaji on y=1104 and the rule on y=1233 at the master. The -10px is the
+          reference's own: the rail's last line sits 46px off the viewport bottom while the edge
+          margin is 56, so the band reaches ten pixels into the bottom padding. `overflow: hidden`
+          clips at the padding box, not the content box, so it stays visible. */}
+      <div className="mt-4 [grid-area:rail] port:mt-10 port:-mb-2.5 land:mt-0">{rail}</div>
     </div>
   )
 }

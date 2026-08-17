@@ -1,4 +1,5 @@
 import { useLab } from './lab.context'
+import { LabLayer } from './lab.layer'
 
 /**
  * The title block and the recipe affordance — the bottom band of the composition.
@@ -17,24 +18,57 @@ export function LabFooter() {
   )
 }
 
+/**
+ * Three of the six dissolving layers, and the first three to move: romaji, then title, then the
+ * ingredient line. The stagger runs front to back, and this is the front.
+ *
+ * The vertical rhythm moved off the type and onto the layers, because the layer is now the flex
+ * child — same 14px and 12px, one level out.
+ */
 function LabTitle() {
   const { drink } = useLab()
 
   return (
     <div className="flex min-w-0 flex-col">
-      <p className="text-romaji text-accent untrack uppercase">{drink.romaji}</p>
-      <h1 className="text-title mt-3.5 text-on-field">{drink.name}</h1>
-      <p className="text-detail mt-3 text-on-field-faint">
-        {drink.ingredientLine}
-        <span className="hidden land:inline">
-          {'   —   '}
-          {drink.gloss}
-        </span>
-      </p>
+      {/*
+        The document's only h1, and the one thing assistive tech reads when the drink changes.
+        The three visible layers below are hidden from it: `AnimatePresence` keeps the outgoing
+        drink in the DOM for the length of the dissolve, and two titles at once is worse than a
+        title that lives somewhere slightly unexpected.
+      */}
+      <h1 aria-live="polite" className="sr-only">
+        {drink.romaji} — {drink.name}. {drink.ingredientLine}. {drink.gloss}.
+      </h1>
+
+      <LabLayer layer="romaji">
+        <p aria-hidden className="text-romaji text-accent untrack uppercase">
+          {drink.romaji}
+        </p>
+      </LabLayer>
+
+      <LabLayer layer="title" className="mt-3.5">
+        <p aria-hidden className="text-title text-on-field">
+          {drink.name}
+        </p>
+      </LabLayer>
+
+      <LabLayer layer="detail" className="mt-3">
+        <p aria-hidden className="text-detail text-on-field-faint">
+          {drink.ingredientLine}
+          <span className="hidden land:inline">
+            {'   —   '}
+            {drink.gloss}
+          </span>
+        </p>
+      </LabLayer>
     </div>
   )
 }
 
+/**
+ * The affordance does not dissolve: it says the same thing about every drink, and a label that
+ * cross-fades into an identical copy of itself is motion with nothing to say.
+ */
 function LabRecipeAffordance() {
   const { drink, setRecipeOpen } = useLab()
 

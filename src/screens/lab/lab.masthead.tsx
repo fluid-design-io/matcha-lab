@@ -23,7 +23,9 @@ export function LabMasthead() {
         }}
       />
 
-      <div className="flex flex-col gap-1.5 land:flex-row land:items-baseline land:gap-[22px] land:pl-2.5">
+      {/* 12px stacked, measured off ref-1-portrait: 抹茶 ends at y=74 and the label starts at
+          y≈87. The 22px in landscape is horizontal and unrelated. */}
+      <div className="flex flex-col gap-3 land:flex-row land:items-baseline land:gap-[22px] land:pl-2.5">
         <span className="font-jp text-kanji-sm text-on-field-strong untrack">抹茶</span>
         <span className="text-label text-on-field-muted untrack uppercase">Matcha Coconut Lab</span>
       </div>

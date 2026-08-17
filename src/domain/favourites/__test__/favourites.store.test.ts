@@ -144,3 +144,66 @@ describe('toggling', () => {
     expect(map.get(KEY)).toBe(afterFirst)
   })
 })
+
+/**
+ * The claim in ticket 12 is that favourites outlive the session, and the tests above cannot make
+ * it: they all share one module instance, so `favouritesStore` already holds the answer before
+ * hydration is asked for. A relaunch is a *fresh module* against a *surviving storage*, and that
+ * is what these reproduce — a cache-busted dynamic import gives Bun a genuinely new instance, so
+ * the second launch starts at `EMPTY, hydrated: false` exactly as a cold iPad does.
+ */
+type FavouritesModule = typeof import('../favourites.store')
+
+let generation = 0
+
+async function coldLaunch(): Promise<FavouritesModule> {
+  generation += 1
+  return (await import(`../favourites.store?cold=${generation}`)) as FavouritesModule
+}
+
+describe('a cold launch', () => {
+  test('three favourites survive the app being closed', async () => {
+    const map = stubStorage(null)
+
+    const first = await coldLaunch()
+    const stopFirst = first.startFavouritesPersistence()
+    first.toggleFavourite('nagi')
+    first.toggleFavourite('to')
+    first.toggleFavourite('shin')
+    stopFirst()
+
+    // Everything the session held is gone; only what reached storage is left.
+    expect(JSON.parse(map.get(KEY)!).sort()).toEqual(['nagi', 'shin', 'to'])
+
+    const second = await coldLaunch()
+    expect(second.favouritesStore).not.toBe(first.favouritesStore)
+    expect(second.favouritesStore.state.ids.size).toBe(0)
+    expect(second.favouritesStore.state.hydrated).toBe(false)
+
+    const stopSecond = second.startFavouritesPersistence()
+    expect([...second.favouritesStore.state.ids].sort()).toEqual(['nagi', 'shin', 'to'])
+    expect(second.favouritesStore.state.hydrated).toBe(true)
+
+    // And the relaunch itself must not have rewritten storage — hydration reads before it
+    // subscribes, so a cold launch is a pure read.
+    expect(JSON.parse(map.get(KEY)!).sort()).toEqual(['nagi', 'shin', 'to'])
+    stopSecond()
+  })
+
+  test('clearing storage gives a clean first run', async () => {
+    const map = stubStorage(JSON.stringify(['kumo', 'awa']))
+
+    const first = await coldLaunch()
+    const stopFirst = first.startFavouritesPersistence()
+    expect(first.favouritesStore.state.ids.size).toBe(2)
+    stopFirst()
+
+    map.clear()
+
+    const second = await coldLaunch()
+    const stopSecond = second.startFavouritesPersistence()
+    expect(second.favouritesStore.state.ids.size).toBe(0)
+    expect(second.favouritesStore.state.hydrated).toBe(true)
+    stopSecond()
+  })
+})
