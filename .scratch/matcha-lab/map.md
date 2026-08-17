@@ -80,6 +80,10 @@ Reached when the core loop — *select drink → view drink → open recipe → 
   neighbours. Two traps recorded in `DESIGN-TASTE.md`: `text-(length:...)` sets size but not
   weight, and kanji ink sits ~9% below its em box centre — measure ink with `TextMetrics`, never
   the element box. — [Landscape master layout](./issues/07-landscape-layout.md)
+- Nine renders generated, verified and normalised. The render sits full-bleed on the field with no
+  border, so its ground must *be* the field: every image is offset to exactly `#7B8F63`, which is
+  what makes the square disappear. Verification now also rejects transparent grounds and drifting
+  ones — both were real defects. — [Nine generated drink renders](./issues/05-drink-renders.md)
 
 ## Not yet specified
 

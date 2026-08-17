@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react'
 import Picture from '@gravity-ui/icons/Picture'
+
+import { getDrinkRender, neighbourRenders } from '#/domain/drinks'
 
 import { useLab } from './lab.context'
 
@@ -51,14 +54,38 @@ function LabWatermark() {
  */
 function LabRenderFrame() {
   const { drink } = useLab()
+  const [loaded, setLoaded] = useState(false)
+  const src = getDrinkRender(drink.id)
+
+  useEffect(() => setLoaded(false), [src])
+
+  // Warm the two renders a single gesture can reach, so a swipe or an arrow key lands on a
+  // decoded image rather than on the empty frame.
+  useEffect(() => {
+    for (const href of neighbourRenders(drink.id)) {
+      const image = new Image()
+      image.src = href
+    }
+  }, [drink.id])
 
   return (
-    <div
-      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 land:left-[76%] size-(--frame-size)"
-    >
-      {/* The reference reads "NAGI · glass render", but each drink has its own true vessel and
-          only some of them are glasses. Naming the drink is enough. */}
-      <RenderFramePlaceholder label={`${drink.romaji} · render`} />
+    <div className="absolute top-1/2 left-1/2 size-(--frame-size) -translate-x-1/2 -translate-y-1/2 land:left-[76%]">
+      {loaded ? null : (
+        // The reference reads "NAGI · glass render", but each drink has its own true vessel and
+        // only some of them are glasses. Naming the drink is enough.
+        <RenderFramePlaceholder label={`${drink.romaji} · render`} />
+      )}
+      <img
+        key={src}
+        src={src}
+        alt={`${drink.name} — ${drink.ingredientLine}`}
+        onLoad={() => setLoaded(true)}
+        decoding="async"
+        // The render is the only thing in the app carrying real colour, and it is the reason the
+        // frame is square. No radius, no border, no shadow.
+        className="absolute inset-0 size-full object-contain transition-opacity duration-300"
+        style={{ opacity: loaded ? 1 : 0 }}
+      />
     </div>
   )
 }

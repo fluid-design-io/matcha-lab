@@ -138,20 +138,49 @@ verification, and refuses to keep an output that fails.
 | Output size | **1254×1254 PNG, fixed.** The tool exposes no size parameter and silently ignores a 2048² request. Only aspect ratio is steerable. |
 | Retries | Regenerating is cheap. Regenerate rather than accept a near-miss. |
 
-## Verifying — the only reliable tell
+## Verifying
 
-A PIL fake looks *plausible* in flat line-art style. It will not look obviously wrong. Two checks,
-both mandatory, on **every single output**:
+Four checks, all mandatory, on **every single output**. `scripts/generate-render.sh` runs them and
+refuses to keep anything that fails. Each one exists because it caught a real defect.
+
+### 1. It is a PNG at the expected size
 
 ```bash
 file out.png                                   # must be: PNG image data, 1254 x 1254
-magick out.png -format %k info:-               # distinct colours
+```
+
+### 2. Distinct colour count — the fake detector
+
+A PIL fake looks *plausible* in flat line-art style. It will not look obviously wrong.
+
+```bash
+magick out.png -format %k info:-
 ```
 
 | Distinct colours | Verdict |
 | --- | --- |
 | < 2,000 | **Code-drawn fake. Discard and regenerate.** The measured PIL fake had 664. |
-| 17,000 – 27,000 | Genuine `image_gen` output. |
+| 15,000 – 72,000 | Genuine `image_gen` output. |
+
+### 3. The ground is opaque
+
+```bash
+magick out.png -alpha extract -format '%[fx:round(minima*255)]' info:-   # must be 255
+```
+
+Asked for a flat background, the model sometimes delivers **the vessel on transparency instead**.
+This survives the colour count, looks perfect on a green page, and composites over whatever is
+behind it everywhere else. 透 TŌ came back this way on the first pass.
+
+### 4. The ground is the right green
+
+```bash
+magick out.png -crop 60x60+0+0 +repage \
+  -format '%[fx:round(mean.r*255)] %[fx:round(mean.g*255)] %[fx:round(mean.b*255)]' info:-
+```
+
+Each channel must be within **18** of `123, 143, 99`. Observed spread across a good set is 3–10,
+so 18 catches a drifting ground without failing honest variation.
 
 Then look at it against `imgen-reference.png`, side by side, at the same size. Check in this
 order, because these are the four things that actually drift:
@@ -168,11 +197,28 @@ There is no budget argument here — it is 70 seconds.
 
 Tell Codex **not** to resize. Do it yourself, so the pipeline is one command and reproducible.
 
+**Normalise the ground first.** This is not optional polish — it is what makes the renders work.
+Each drink sits full-bleed on the field with no border, so its own ground has to *be* the field.
+The model lands within a few levels of the target, which is invisible in isolation and glaring in
+the app: three levels off turns the render into a visible square patch. A per-channel offset is
+the gentlest correction that fixes it, and at single-digit deltas nothing clips.
+
 ```bash
-# 1254 → 2048, then WebP
-magick out.png -filter Lanczos -resize 2048x2048 -strip render-2048.png
+# ground → exactly #7B8F63, then 1254 → 2048, then WebP
+magick out.png \
+  -channel R -evaluate add "${dr}%" \
+  -channel G -evaluate add "${dg}%" \
+  -channel B -evaluate add "${db}%" +channel \
+  -filter Lanczos -resize 2048x2048 -strip render-2048.png
 cwebp -q 82 -m 6 render-2048.png -o ../src/assets/renders/<id>.webp
 ```
+
+`-evaluate add` takes **quantum units, not 8-bit levels** — on a Q16 build `add 6` shifts by
+6/65535 and does nothing at all, silently. Percent of QuantumRange is the portable way to say
+"+6/255": `dr = (123 - corner.r) / 255 * 100`.
+
+After normalising, all nine grounds land within one level of `123, 143, 99`, and the square
+disappears into the field.
 
 - A 1.25 MB PNG lands at ~44–52 KB at `q82`. That is the measured range; hold the set near it.
 - **Do not use `sips` for WebP.** `sips -s format webp` silently produces no file and exits 0.

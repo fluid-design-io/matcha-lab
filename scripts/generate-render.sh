@@ -22,8 +22,13 @@ OUT="$ROOT/src/assets/renders"
 # with PIL while reporting success. This is not interchangeable.
 CODEX="/Applications/ChatGPT.app/Contents/Resources/codex"
 
-# Genuine image_gen output measures 17k-27k distinct colours. A measured PIL fake had 664.
+# Genuine image_gen output measures 15k-72k distinct colours. A measured PIL fake had 664.
 MIN_COLOURS=2000
+
+# The flat ground, and how far a corner may stray from it per channel. Observed spread across a
+# good set is 3-10; 18 catches a drifting ground without failing honest variation.
+GROUND_R=123; GROUND_G=143; GROUND_B=99
+GROUND_TOLERANCE=18
 
 # ---------------------------------------------------------------------------- the nine
 
@@ -33,7 +38,9 @@ DRINKS=(
   "nagi|tall straight-sided highball glass filled with clear liquid and large ice cubes, with a distinct layer of green matcha floating on top|near-clear with a green matcha float"
   "kumo|small footed dessert bowl with a spoon resting in it, holding two pale scoops of ice cream with hot green matcha poured over them and pooling underneath|pale cream scoops flooded with deep green matcha"
   "kage|tall straight-sided glass with ice, holding three distinct horizontal bands - roasted brown at the bottom, milky white in the middle, green on top|roasted brown, then milky white, then green"
-  "awa|stemmed coupe glass holding jade liquid under a thick even foam collar that fills the top third|jade green under a pale foam collar"
+  # "jade" alone came back teal-blue on the first pass — the word carries a blue reading the
+  # model is happy to take. Naming the green and excluding blue is what fixed it.
+  "awa|stemmed coupe glass holding warm green matcha liquid under a thick even foam collar that fills the top third|warm jade green, never blue or teal, under a pale foam collar"
   "on|handled ceramic mug, no ice, holding pale green milk with a soft foam cap and a light dusting on the surface|pale sage green"
   "to|tall narrow highball glass with large ice cubes and fine rising bubbles in clear liquid, with a green matcha disc suspended in the upper third|clear with a suspended green disc"
   "ichigo|tall straight-sided glass with ice, holding three distinct horizontal bands - pink fruit at the bottom, milky white in the middle, green on top|pink, then milky white, then green"
@@ -103,8 +110,50 @@ verify_and_convert() {
     return 1
   fi
 
+  # The ground must be opaque. Asked for a flat background, the model sometimes delivers the
+  # vessel on transparency instead — which survives the colour count, looks perfect on a green
+  # page, and composites over whatever is behind it everywhere else.
+  local min_alpha; min_alpha="$(magick "$dir/out.png" -alpha extract -format '%[fx:round(minima*255)]' info:-)"
+  if [ "$min_alpha" -lt 250 ]; then
+    printf '  \033[31m✗ transparent background (min alpha %s) — discarding\033[0m\n' "$min_alpha"
+    return 1
+  fi
+
+  # ...and it must be the right green. A drifting ground is invisible one image at a time and
+  # obvious the moment the nine sit together.
+  local corner; corner="$(magick "$dir/out.png" -crop 60x60+0+0 +repage \
+    -format '%[fx:round(mean.r*255)] %[fx:round(mean.g*255)] %[fx:round(mean.b*255)]' info:-)"
+  read -r cr cg cb <<< "$corner"
+  local dr=$(( cr > GROUND_R ? cr - GROUND_R : GROUND_R - cr ))
+  local dg=$(( cg > GROUND_G ? cg - GROUND_G : GROUND_G - cg ))
+  local db=$(( cb > GROUND_B ? cb - GROUND_B : GROUND_B - cb ))
+  if [ "$dr" -gt "$GROUND_TOLERANCE" ] || [ "$dg" -gt "$GROUND_TOLERANCE" ] || [ "$db" -gt "$GROUND_TOLERANCE" ]; then
+    printf '  \033[31m✗ ground is rgb(%s,%s,%s), off by (%s,%s,%s) — discarding\033[0m\n' \
+      "$cr" "$cg" "$cb" "$dr" "$dg" "$db"
+    return 1
+  fi
+
+  # Normalise the ground to exactly #7B8F63.
+  #
+  # The model lands within a few levels of the target, which is invisible on its own and glaring
+  # in the app: the render sits full-bleed on the field, and a ground three levels off turns the
+  # square into a visible patch. A per-channel offset is the gentlest correction that fixes it —
+  # deltas are single digits, so nothing clips and the drawing is untouched.
+  local nr=$(( GROUND_R - cr )) ng=$(( GROUND_G - cg )) nb=$(( GROUND_B - cb ))
+  # -evaluate add takes quantum units, not 8-bit levels — on a Q16 build `add 6` shifts by
+  # 6/65535 and does nothing at all. Percent of QuantumRange is the portable way to say "+6/255".
+  local pr pg pb
+  pr="$(awk -v v="$nr" 'BEGIN { printf "%.4f", v / 255 * 100 }')"
+  pg="$(awk -v v="$ng" 'BEGIN { printf "%.4f", v / 255 * 100 }')"
+  pb="$(awk -v v="$nb" 'BEGIN { printf "%.4f", v / 255 * 100 }')"
+  printf '  ground rgb(%s,%s,%s) → normalised by (%+d,%+d,%+d)\n' "$cr" "$cg" "$cb" "$nr" "$ng" "$nb"
+
   mkdir -p "$OUT"
-  magick "$dir/out.png" -filter Lanczos -resize 2048x2048 -strip "$dir/render-2048.png"
+  magick "$dir/out.png" \
+    -channel R -evaluate add "${pr}%" \
+    -channel G -evaluate add "${pg}%" \
+    -channel B -evaluate add "${pb}%" +channel \
+    -filter Lanczos -resize 2048x2048 -strip "$dir/render-2048.png"
   cwebp -quiet -q 82 -m 6 "$dir/render-2048.png" -o "$OUT/$id.webp"
 
   printf '  \033[32m✓\033[0m %s  %s colours  →  src/assets/renders/%s.webp (%s)\n' \
@@ -119,11 +168,20 @@ command -v magick >/dev/null || { echo "missing imagemagick: brew install imagem
 command -v cwebp  >/dev/null || { echo "missing cwebp: brew install webp" >&2; exit 1; }
 
 target="${1:-}"
-[ -n "$target" ] || { echo "usage: $0 <drink-id|all>" >&2; exit 1; }
+[ -n "$target" ] || { echo "usage: $0 <drink-id|all|reconvert>" >&2; exit 1; }
 
 failed=()
 for row in "${DRINKS[@]}"; do
   IFS='|' read -r id subject liquid <<< "$row"
+
+  # `reconvert` re-runs verification and post-processing over the PNGs already in .render-work,
+  # for when the pipeline changes but the images are fine. Nothing is regenerated.
+  if [ "$target" = "reconvert" ]; then
+    printf '\n\033[1m→ %s\033[0m\n' "$id"
+    verify_and_convert "$id" "$WORK/$id" || failed+=("$id")
+    continue
+  fi
+
   [ "$target" = "all" ] || [ "$target" = "$id" ] || continue
   generate_one "$id" "$subject" "$liquid" || failed+=("$id")
 done
