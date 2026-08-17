@@ -24,7 +24,6 @@
     "@tanstack/react-start": "latest",
     "@tanstack/react-store": "latest",
     "@tanstack/store": "latest",
-    "@typegpu/color": "^0.12.0",
     "@typegpu/noise": "^0.12.0",
     "@typegpu/react": "^0.12.0",
     "class-variance-authority": "^0.7.1",

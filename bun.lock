@@ -13,7 +13,6 @@
         "@tanstack/react-start": "latest",
         "@tanstack/react-store": "latest",
         "@tanstack/store": "latest",
-        "@typegpu/color": "^0.12.0",
         "@typegpu/noise": "^0.12.0",
         "@typegpu/react": "^0.12.0",
         "class-variance-authority": "^0.7.1",
@@ -218,8 +217,6 @@
     "@tanstack/store": ["@tanstack/store@0.11.1", "", {}, "sha512-mzTOBhypOuDJAy/D8n2MfUZ1HFkXnmSETviRyhqEC8LUE7/IZQExOTxMANj3KjTofYTkFNpBY67qaVrT41YccA=="],
 
     "@tanstack/virtual-file-routes": ["@tanstack/virtual-file-routes@1.162.0", "", {}, "sha512-uhOeFyxLcU41HzvrxsGpiWdcMbScY1EDgbZ5K7DVRMYInbLYWAC0EA/kx9wXAoSM8q82bUG2hRl8+EAjE6XAbA=="],
-
-    "@typegpu/color": ["@typegpu/color@0.12.0", "", { "peerDependencies": { "typegpu": "^0.12.0" } }, "sha512-E353DLFV2RjBNrAvrOtLNQxAY0iAN6fHotNkzeSgAxepNG7ZO7iV/Eu1DABwjIjuT3YjCZGg03+CL866sz98Wg=="],
 
     "@typegpu/noise": ["@typegpu/noise@0.12.0", "", { "peerDependencies": { "typegpu": "^0.12.0" } }, "sha512-JuBKXz8nkwC+1jMjJS5C6SZD+xzsF1yb8+Pcl3L5uhjqdEGraksXH20v0vOvjmio8dsRZWhmZ5S27DTdqhSpCA=="],
 

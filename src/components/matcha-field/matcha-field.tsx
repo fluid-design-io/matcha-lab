@@ -13,10 +13,11 @@ import { prefersReducedMotion } from '#/lib/motion'
 import { FieldUniforms, fieldFragment, fieldLayout } from './matcha-field.shader'
 
 /**
- * How often the field is allowed to redraw. The drift crosses the screen in about four minutes, so
- * 12 fps is indistinguishable from sixty on a canvas that never stops drawing.
+ * How often the field is allowed to redraw. The drift crosses the screen in about two minutes and
+ * the shader is three instructions deep, so 24 fps is indistinguishable from sixty while still
+ * being smooth enough that the (now visible) mottling does not step.
  */
-const FRAME_INTERVAL_SECONDS = 1 / 12
+const FRAME_INTERVAL_SECONDS = 1 / 24
 
 const PRESENTATION_FORMAT =
   typeof navigator !== 'undefined' && navigator.gpu
@@ -112,7 +113,11 @@ function FieldCanvas() {
     lastDraw.current = elapsedSeconds
     lastSize.current = size
 
-    uniform.write({ resolution: [width, height], time: still ? 0 : elapsedSeconds })
+    uniform.write({
+      resolution: [width, height],
+      time: still ? 0 : elapsedSeconds,
+      pixelRatio: ratio,
+    })
     pipeline.withColorAttachment({ view: context }).draw(3)
 
     if (!painted) setPainted(true)

@@ -62,7 +62,7 @@ export function RailItem({ drink, selected, onSelect }: RailItemProps) {
           <span
             aria-hidden
             className={cn(
-              'text-micro absolute top-[70%] left-1/2 -translate-x-1/2 untrack uppercase',
+              'text-micro absolute top-[75%] left-1/2 -translate-x-1/2 untrack uppercase',
               'land:top-1/2 land:left-[82%] land:-translate-x-0 land:-translate-y-1/2 land:[writing-mode:vertical-rl]',
               selected ? 'text-on-field-muted' : 'text-on-field-faint opacity-0 port:opacity-100',
             )}
@@ -89,7 +89,7 @@ export function RailItem({ drink, selected, onSelect }: RailItemProps) {
             // its old box to its new one, and `scale` does not multiply a standalone `translate`.
             className={cn(
               'absolute h-px bg-accent',
-              'bottom-[8%] left-[38%] w-[24%]',
+              'bottom-0 left-[38%] w-[24%]',
               'land:top-1/2 land:bottom-auto land:left-[32%] land:w-[10%]',
             )}
           />
